@@ -166,7 +166,12 @@ FourWheel_PartialImage/$(MODE_DIR)/Objects/FourWheel/MyRobot.o : $(PRJ_ROOT_DIR)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
-OBJECTS_FourWheel_PartialImage = FourWheel_PartialImage/$(MODE_DIR)/Objects/FourWheel/MyRobot.o
+FourWheel_PartialImage/$(MODE_DIR)/Objects/FourWheel/XboxController.o : $(PRJ_ROOT_DIR)/XboxController.cpp $(FORCE_FILE_BUILD)
+	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
+
+
+OBJECTS_FourWheel_PartialImage = FourWheel_PartialImage/$(MODE_DIR)/Objects/FourWheel/MyRobot.o \
+	 FourWheel_PartialImage/$(MODE_DIR)/Objects/FourWheel/XboxController.o
 
 FourWheel_PartialImage/$(MODE_DIR)/FourWheel_PartialImage.o : $(OBJECTS_FourWheel_PartialImage)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc -r -nostdlib -Wl,-X  -o "$@" $(OBJECTS_FourWheel_PartialImage) $(LIBPATH) $(LIBS) $(ADDED_LIBPATH) $(ADDED_LIBS)  && if [ "$(EXPAND_DBG)" = "1" ]; then plink "$@";fi
@@ -180,7 +185,7 @@ FourWheel_PartialImage/$(MODE_DIR)/FourWheel_PartialImage_clean :
 
 force : 
 
-DEP_FILES := FourWheel_PartialImage/$(MODE_DIR)/Objects/FourWheel/MyRobot.d
+DEP_FILES := FourWheel_PartialImage/$(MODE_DIR)/Objects/FourWheel/MyRobot.d FourWheel_PartialImage/$(MODE_DIR)/Objects/FourWheel/XboxController.d
 -include $(DEP_FILES)
 
 
