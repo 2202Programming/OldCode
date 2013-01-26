@@ -244,14 +244,14 @@
         </mapAttribute>
     </attributes>
     <buildtargets>
-        <buildtarget buildtool="Linker" name="VisionSample2013" passed="false" targetname="VisionSample2013">
+        <buildtarget buildtool="Linker" name="XboxLibrary2013" passed="false" targetname="XboxLibrary2013">
             <contents>
-                <buildtargetreference name="/VisionSample2013/VisionSample2013_partialImage"/>
+                <buildtargetreference name="/XboxLibrary2013/XboxLibrary2013_partialImage"/>
             </contents>
         </buildtarget>
-        <buildtarget buildtool="Partial Image Linker" name="VisionSample2013_partialImage" passed="true" targetname="VisionSample2013_partialImage">
+        <buildtarget buildtool="Partial Image Linker" name="XboxLibrary2013_partialImage" passed="true" targetname="XboxLibrary2013_partialImage">
             <contents>
-                <folder name="/VisionSample2013" recursive="true"/>
+                <folder name="/XboxLibrary2013" recursive="true"/>
             </contents>
         </buildtarget>
     </buildtargets>

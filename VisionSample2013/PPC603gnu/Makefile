@@ -79,119 +79,108 @@ endif
 
 
 #Project Targets
-PROJECT_TARGETS = SimpleTemplate/$(MODE_DIR)/SimpleTemplate.out \
-	 SimpleTemplate_partialImage/$(MODE_DIR)/SimpleTemplate_partialImage.o
+PROJECT_TARGETS = VisionSample2013/$(MODE_DIR)/VisionSample2013.out \
+	 VisionSample2013_partialImage/$(MODE_DIR)/VisionSample2013_partialImage.o
 
 
 #Rules
 
-# SimpleTemplate
+# VisionSample2013
 ifeq ($(DEBUG_MODE),1)
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_C-Compiler = -g
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_C++-Compiler = -g
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_Linker = -g
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_Partial-Image-Linker = 
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_Librarian = 
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_Assembler = -g
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_C-Compiler = -g
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_C++-Compiler = -g
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_Linker = -g
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_Partial-Image-Linker = 
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_Librarian = 
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_Assembler = -g
 else
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_C-Compiler = -O2 -fstrength-reduce -fno-builtin
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_C++-Compiler = -O2 -fstrength-reduce -fno-builtin
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_Linker = -O2 -fstrength-reduce -fno-builtin
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_Partial-Image-Linker = 
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_Librarian = 
-SimpleTemplate/$(MODE_DIR)/% : DEBUGFLAGS_Assembler = -O2 -fstrength-reduce -fno-builtin
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_C-Compiler = -O2 -fstrength-reduce -fno-builtin
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_C++-Compiler = -O2 -fstrength-reduce -fno-builtin
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_Linker = -O2 -fstrength-reduce -fno-builtin
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_Partial-Image-Linker = 
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_Librarian = 
+VisionSample2013/$(MODE_DIR)/% : DEBUGFLAGS_Assembler = -O2 -fstrength-reduce -fno-builtin
 endif
-SimpleTemplate/$(MODE_DIR)/% : IDE_INCLUDES = -I$(WIND_BASE)/target/h -I$(WIND_BASE)/target/h/WPILib -I$(WIND_BASE)/target/h/wrn/coreip 
-SimpleTemplate/$(MODE_DIR)/% : IDE_LIBRARIES = $(WIND_BASE)/target/lib/WPILib.a 
-SimpleTemplate/$(MODE_DIR)/% : IDE_DEFINES = 
-SimpleTemplate/$(MODE_DIR)/% : PROJECT_TYPE = DKM
-SimpleTemplate/$(MODE_DIR)/% : DEFINES = 
-SimpleTemplate/$(MODE_DIR)/% : EXPAND_DBG = 0
-SimpleTemplate/$(MODE_DIR)/% : VX_CPU_FAMILY = ppc
-SimpleTemplate/$(MODE_DIR)/% : CPU = PPC603
-SimpleTemplate/$(MODE_DIR)/% : TOOL_FAMILY = gnu
-SimpleTemplate/$(MODE_DIR)/% : TOOL = gnu
-SimpleTemplate/$(MODE_DIR)/% : TOOL_PATH = 
-SimpleTemplate/$(MODE_DIR)/% : CC_ARCH_SPEC = -mcpu=603 -mstrict-align -mno-implicit-fp -mlongcall
-SimpleTemplate/$(MODE_DIR)/% : LIBPATH = 
-SimpleTemplate/$(MODE_DIR)/% : LIBS = 
-SimpleTemplate/$(MODE_DIR)/% : OBJ_DIR := SimpleTemplate/$(MODE_DIR)
+VisionSample2013/$(MODE_DIR)/% : IDE_INCLUDES = -I$(WIND_BASE)/target/h -I$(WIND_BASE)/target/h/WPILib -I$(WIND_BASE)/target/h/wrn/coreip 
+VisionSample2013/$(MODE_DIR)/% : IDE_LIBRARIES = $(WIND_BASE)/target/lib/WPILib.a 
+VisionSample2013/$(MODE_DIR)/% : IDE_DEFINES = 
+VisionSample2013/$(MODE_DIR)/% : PROJECT_TYPE = DKM
+VisionSample2013/$(MODE_DIR)/% : DEFINES = 
+VisionSample2013/$(MODE_DIR)/% : EXPAND_DBG = 0
+VisionSample2013/$(MODE_DIR)/% : VX_CPU_FAMILY = ppc
+VisionSample2013/$(MODE_DIR)/% : CPU = PPC603
+VisionSample2013/$(MODE_DIR)/% : TOOL_FAMILY = gnu
+VisionSample2013/$(MODE_DIR)/% : TOOL = gnu
+VisionSample2013/$(MODE_DIR)/% : TOOL_PATH = 
+VisionSample2013/$(MODE_DIR)/% : CC_ARCH_SPEC = -mcpu=603 -mstrict-align -mno-implicit-fp -mlongcall
+VisionSample2013/$(MODE_DIR)/% : LIBPATH = 
+VisionSample2013/$(MODE_DIR)/% : LIBS = 
+VisionSample2013/$(MODE_DIR)/% : OBJ_DIR := VisionSample2013/$(MODE_DIR)
 
-OBJECTS_SimpleTemplate = $(WS_ROOT_DIR)/Tim2013/PPC603gnu/SimpleTemplate_partialImage/$(MODE_DIR)/SimpleTemplate_partialImage.o
+OBJECTS_VisionSample2013 = VisionSample2013_partialImage/$(MODE_DIR)/VisionSample2013_partialImage.o
 
-SimpleTemplate/$(MODE_DIR)/SimpleTemplate.out : $(OBJECTS_SimpleTemplate)
-	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@";rm -f "$@";nmppc $(OBJECTS_SimpleTemplate) $(IDE_LIBRARIES) | tclsh $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc > $(OBJ_DIR)/ctdt.c; $(TOOL_PATH)ccppc $(DEBUGFLAGS_Linker) $(CC_ARCH_SPEC) -fdollars-in-identifiers -Wall $(ADDED_CFLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES)  -o $(OBJ_DIR)/ctdt.o -c $(OBJ_DIR)/ctdt.c; $(TOOL_PATH)ccppc -r -nostdlib -Wl,-X -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT -o "$@" $(OBJ_DIR)/ctdt.o $(OBJECTS_SimpleTemplate) $(IDE_LIBRARIES) $(LIBPATH) $(LIBS)  $(ADDED_LIBPATH) $(ADDED_LIBS) && if [ "$(EXPAND_DBG)" = "1" ]; then plink "$@";fi
+VisionSample2013/$(MODE_DIR)/VisionSample2013.out : $(OBJECTS_VisionSample2013)
+	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@";rm -f "$@";nmppc $(OBJECTS_VisionSample2013) $(IDE_LIBRARIES) | tclsh $(WIND_BASE)/host/resource/hutils/tcl/munch.tcl -c ppc > $(OBJ_DIR)/ctdt.c; $(TOOL_PATH)ccppc $(DEBUGFLAGS_Linker) $(CC_ARCH_SPEC) -fdollars-in-identifiers -Wall $(ADDED_CFLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES)  -o $(OBJ_DIR)/ctdt.o -c $(OBJ_DIR)/ctdt.c; $(TOOL_PATH)ccppc -r -nostdlib -Wl,-X -T $(WIND_BASE)/target/h/tool/gnu/ldscripts/link.OUT -o "$@" $(OBJ_DIR)/ctdt.o $(OBJECTS_VisionSample2013) $(IDE_LIBRARIES) $(LIBPATH) $(LIBS)  $(ADDED_LIBPATH) $(ADDED_LIBS) && if [ "$(EXPAND_DBG)" = "1" ]; then plink "$@";fi
 
-SimpleTemplate/$(MODE_DIR)/SimpleTemplate_compile_file : $(FILE) ;
+VisionSample2013/$(MODE_DIR)/VisionSample2013_compile_file : $(FILE) ;
 
-_clean :: SimpleTemplate/$(MODE_DIR)/SimpleTemplate_clean
+_clean :: VisionSample2013/$(MODE_DIR)/VisionSample2013_clean
 
-SimpleTemplate/$(MODE_DIR)/SimpleTemplate_clean : 
-	$(TRACE_FLAG)if [ -d "SimpleTemplate" ]; then cd "SimpleTemplate"; rm -rf $(MODE_DIR); fi
+VisionSample2013/$(MODE_DIR)/VisionSample2013_clean : 
+	$(TRACE_FLAG)if [ -d "VisionSample2013" ]; then cd "VisionSample2013"; rm -rf $(MODE_DIR); fi
 
 
-# SimpleTemplate_partialImage
+# VisionSample2013_partialImage
 ifeq ($(DEBUG_MODE),1)
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_C-Compiler = -g
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_C++-Compiler = -g
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Linker = -g
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Partial-Image-Linker = 
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Librarian = 
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Assembler = -g
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_C-Compiler = -g
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_C++-Compiler = -g
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Linker = -g
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Partial-Image-Linker = 
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Librarian = 
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Assembler = -g
 else
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_C-Compiler = -O2 -fstrength-reduce -fno-builtin
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_C++-Compiler = -O2 -fstrength-reduce -fno-builtin
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Linker = -O2 -fstrength-reduce -fno-builtin
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Partial-Image-Linker = 
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Librarian = 
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Assembler = -O2 -fstrength-reduce -fno-builtin
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_C-Compiler = -O2 -fstrength-reduce -fno-builtin
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_C++-Compiler = -O2 -fstrength-reduce -fno-builtin
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Linker = -O2 -fstrength-reduce -fno-builtin
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Partial-Image-Linker = 
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Librarian = 
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEBUGFLAGS_Assembler = -O2 -fstrength-reduce -fno-builtin
 endif
-SimpleTemplate_partialImage/$(MODE_DIR)/% : IDE_INCLUDES = -I$(WIND_BASE)/target/h -I$(WIND_BASE)/target/h/WPILib -I$(WIND_BASE)/target/h/wrn/coreip 
-SimpleTemplate_partialImage/$(MODE_DIR)/% : IDE_LIBRARIES = $(WIND_BASE)/target/lib/WPILib.a 
-SimpleTemplate_partialImage/$(MODE_DIR)/% : IDE_DEFINES = 
-SimpleTemplate_partialImage/$(MODE_DIR)/% : PROJECT_TYPE = DKM
-SimpleTemplate_partialImage/$(MODE_DIR)/% : DEFINES = 
-SimpleTemplate_partialImage/$(MODE_DIR)/% : EXPAND_DBG = 0
-SimpleTemplate_partialImage/$(MODE_DIR)/% : VX_CPU_FAMILY = ppc
-SimpleTemplate_partialImage/$(MODE_DIR)/% : CPU = PPC603
-SimpleTemplate_partialImage/$(MODE_DIR)/% : TOOL_FAMILY = gnu
-SimpleTemplate_partialImage/$(MODE_DIR)/% : TOOL = gnu
-SimpleTemplate_partialImage/$(MODE_DIR)/% : TOOL_PATH = 
-SimpleTemplate_partialImage/$(MODE_DIR)/% : CC_ARCH_SPEC = -mcpu=603 -mstrict-align -mno-implicit-fp -mlongcall
-SimpleTemplate_partialImage/$(MODE_DIR)/% : LIBPATH = 
-SimpleTemplate_partialImage/$(MODE_DIR)/% : LIBS = 
-SimpleTemplate_partialImage/$(MODE_DIR)/% : OBJ_DIR := SimpleTemplate_partialImage/$(MODE_DIR)
+VisionSample2013_partialImage/$(MODE_DIR)/% : IDE_INCLUDES = -I$(WIND_BASE)/target/h -I$(WIND_BASE)/target/h/WPILib -I$(WIND_BASE)/target/h/wrn/coreip 
+VisionSample2013_partialImage/$(MODE_DIR)/% : IDE_LIBRARIES = $(WIND_BASE)/target/lib/WPILib.a 
+VisionSample2013_partialImage/$(MODE_DIR)/% : IDE_DEFINES = 
+VisionSample2013_partialImage/$(MODE_DIR)/% : PROJECT_TYPE = DKM
+VisionSample2013_partialImage/$(MODE_DIR)/% : DEFINES = 
+VisionSample2013_partialImage/$(MODE_DIR)/% : EXPAND_DBG = 0
+VisionSample2013_partialImage/$(MODE_DIR)/% : VX_CPU_FAMILY = ppc
+VisionSample2013_partialImage/$(MODE_DIR)/% : CPU = PPC603
+VisionSample2013_partialImage/$(MODE_DIR)/% : TOOL_FAMILY = gnu
+VisionSample2013_partialImage/$(MODE_DIR)/% : TOOL = gnu
+VisionSample2013_partialImage/$(MODE_DIR)/% : TOOL_PATH = 
+VisionSample2013_partialImage/$(MODE_DIR)/% : CC_ARCH_SPEC = -mcpu=603 -mstrict-align -mno-implicit-fp -mlongcall
+VisionSample2013_partialImage/$(MODE_DIR)/% : LIBPATH = 
+VisionSample2013_partialImage/$(MODE_DIR)/% : LIBS = 
+VisionSample2013_partialImage/$(MODE_DIR)/% : OBJ_DIR := VisionSample2013_partialImage/$(MODE_DIR)
 
-SimpleTemplate_partialImage/$(MODE_DIR)/Objects/Tim2013/Tim2013.o : $(WS_ROOT_DIR)/Tim2013/Tim2013.cpp $(FORCE_FILE_BUILD)
+VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.o : $(PRJ_ROOT_DIR)/VisionSample2013.cpp $(FORCE_FILE_BUILD)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
-SimpleTemplate_partialImage/$(MODE_DIR)/Objects/Tim2013/VisionSample2013.o : $(WS_ROOT_DIR)/Tim2013/VisionSample2013.cpp $(FORCE_FILE_BUILD)
-	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
+OBJECTS_VisionSample2013_partialImage = VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.o
 
+VisionSample2013_partialImage/$(MODE_DIR)/VisionSample2013_partialImage.o : $(OBJECTS_VisionSample2013_partialImage)
+	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc -r -nostdlib -Wl,-X  -o "$@" $(OBJECTS_VisionSample2013_partialImage) $(LIBPATH) $(LIBS) $(ADDED_LIBPATH) $(ADDED_LIBS)  && if [ "$(EXPAND_DBG)" = "1" ]; then plink "$@";fi
 
-OBJECTS_SimpleTemplate_partialImage = SimpleTemplate_partialImage/$(MODE_DIR)/Objects/Tim2013/Tim2013.o \
-	 SimpleTemplate_partialImage/$(MODE_DIR)/Objects/Tim2013/VisionSample2013.o
+VisionSample2013_partialImage/$(MODE_DIR)/VisionSample2013_partialImage_compile_file : $(FILE) ;
 
-SimpleTemplate_partialImage/$(MODE_DIR)/SimpleTemplate_partialImage.o : $(OBJECTS_SimpleTemplate_partialImage)
-	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc -r -nostdlib -Wl,-X  -o "$@" $(OBJECTS_SimpleTemplate_partialImage) $(LIBPATH) $(LIBS) $(ADDED_LIBPATH) $(ADDED_LIBS)  && if [ "$(EXPAND_DBG)" = "1" ]; then plink "$@";fi
+_clean :: VisionSample2013_partialImage/$(MODE_DIR)/VisionSample2013_partialImage_clean
 
-SimpleTemplate_partialImage/$(MODE_DIR)/SimpleTemplate_partialImage_compile_file : $(FILE) ;
-
-_clean :: SimpleTemplate_partialImage/$(MODE_DIR)/SimpleTemplate_partialImage_clean
-
-SimpleTemplate_partialImage/$(MODE_DIR)/SimpleTemplate_partialImage_clean : 
-	$(TRACE_FLAG)if [ -d "SimpleTemplate_partialImage" ]; then cd "SimpleTemplate_partialImage"; rm -rf $(MODE_DIR); fi
-
-$(WS_ROOT_DIR)/Tim2013/PPC603gnu/SimpleTemplate_partialImage/$(MODE_DIR)/SimpleTemplate_partialImage.o : force_referenced_rebuilds_Tim2013 ;
-
-force_referenced_rebuilds_Tim2013 : 
-	$(TRACE_FLAG)cd $(WS_ROOT_DIR)/Tim2013/PPC603gnu;\
-	make --no-print-directory BUILD_SPEC=PPC603gnu DEBUG_MODE=1 SimpleTemplate_partialImage/$(MODE_DIR)/SimpleTemplate_partialImage.o
+VisionSample2013_partialImage/$(MODE_DIR)/VisionSample2013_partialImage_clean : 
+	$(TRACE_FLAG)if [ -d "VisionSample2013_partialImage" ]; then cd "VisionSample2013_partialImage"; rm -rf $(MODE_DIR); fi
 
 force : 
 
-DEP_FILES := SimpleTemplate_partialImage/$(MODE_DIR)/Objects/Tim2013/Tim2013.d SimpleTemplate_partialImage/$(MODE_DIR)/Objects/Tim2013/VisionSample2013.d
+DEP_FILES := VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.d
 -include $(DEP_FILES)
 
 

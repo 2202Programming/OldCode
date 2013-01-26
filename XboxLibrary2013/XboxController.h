@@ -5,9 +5,9 @@
 #define DEBOUNCER 30
 
 #include "WPILib.h"
+#include "BeastController.h"
 
-
-class XboxController  {
+class XboxController: public BeastController {
 public:
 	~XboxController() {}
 	bool isLeftJogPressed();
