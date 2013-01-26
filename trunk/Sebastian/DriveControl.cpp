@@ -30,7 +30,7 @@
 #define STRAIGHT_POWER .3
 #define STEPS_FORWARD 5
 DriveControl::DriveControl() :
-	myRobot(1, 2), sonarCenter(3), signalControlVoltage(4), accelFront(6),
+	myRobot(1, 2, 3, 4), sonarCenter(3), signalControlVoltage(4), accelFront(6),
 			accelBack(7) // as they are declared above.
 {
 
