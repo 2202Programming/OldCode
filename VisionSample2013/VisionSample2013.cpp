@@ -2,7 +2,7 @@
 #include "Vision/RGBImage.h"
 #include "Vision/BinaryImage.h"
 #include "Math.h"
- 
+
 /**
  * Sample program to use NIVision to find rectangles in the scene that are illuminated
  * by a LED ring light (similar to the model from FIRSTChoice). The camera sensitivity
@@ -45,15 +45,18 @@
 #define XMINSIZE 24
 #define YMAXSIZE 24
 #define YMINSIZE 48
-const double xMax[XMAXSIZE] = {1, 1, 1, 1, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, 1, 1, 1, 1};
-const double xMin[XMINSIZE] = {.4, .6, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, 0.6, 0};
-const double yMax[YMAXSIZE] = {1, 1, 1, 1, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, .5, 1, 1, 1, 1};
-const double yMin[YMINSIZE] = {.4, .6, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05,
-								.05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05,
-								.05, .05, .6, 0};
+const double xMax[XMAXSIZE] = { 1, 1, 1, 1, .5, .5, .5, .5, .5, .5, .5, .5, .5,
+		.5, .5, .5, .5, .5, .5, .5, 1, 1, 1, 1 };
+const double xMin[XMINSIZE] = { .4, .6, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1,
+		.1, .1, .1, .1, .1, .1, .1, .1, .1, .1, 0.6, 0 };
+const double yMax[YMAXSIZE] = { 1, 1, 1, 1, .5, .5, .5, .5, .5, .5, .5, .5, .5,
+		.5, .5, .5, .5, .5, .5, .5, 1, 1, 1, 1 };
+const double yMin[YMINSIZE] = { .4, .6, .05, .05, .05, .05, .05, .05, .05, .05,
+		.05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05,
+		.05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05, .05,
+		.05, .05, .05, .05, .05, .05, .05, .05, .6, 0 };
 
-class VisionSample2013 : public SimpleRobot
-{
+class VisionSample2013: public SimpleRobot {
 	//Structure to represent the scores for the various tests used for target identification
 	struct Scores {
 		double rectangularity;
@@ -63,103 +66,133 @@ class VisionSample2013 : public SimpleRobot
 		double yEdge;
 
 	};
-	
+
 	RobotDrive myRobot; // robot drive system
 	Joystick stick; // only joystick
 	Scores *scores;
+	DriverStationLCD *dsLCD;
 
 public:
-	VisionSample2013(void):
-		myRobot(1, 2),	// these must be initialized in the same order
-		stick(1)		// as they are declared above.
+	VisionSample2013(void) :
+		myRobot(1, 2), // these must be initialized in the same order
+				stick(1) // as they are declared above.
 	{
 		myRobot.SetExpiration(0.1);
 		myRobot.SetSafetyEnabled(false);
+		dsLCD = DriverStationLCD::GetInstance();
+		dsLCD->Clear();
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Vision Sample 0.2");
+		dsLCD->UpdateLCD();
 	}
 
 	/**
 	 * Image processing code to identify 2013 Vision targets
 	 */
-	void Autonomous(void)
-	{
-		
-		Threshold threshold(60, 100, 90, 255, 20, 255);	//HSV threshold criteria, ranges are in that order ie. Hue is 60-100
-		ParticleFilterCriteria2 criteria[] = {
-				{IMAQ_MT_AREA, AREA_MINIMUM, 65535, false, false}
-		};												//Particle filter criteria, used to filter out small particles
-		 AxisCamera &camera = AxisCamera::GetInstance();	//To use the Axis camera uncomment this line
-		
-//		while (IsAutonomous() && IsEnabled()) {
-            /**
-             * Do the image capture with the camera and apply the algorithm described above. This
-             * sample will either get images from the camera or from an image file stored in the top
-             * level directory in the flash memory on the cRIO. The file name in this case is "testImage.jpg"
-             */
-			ColorImage *image;
-			//image = new RGBImage("/testImage.jpg");		// get the sample image from the cRIO flash
+	void Autonomous(void) {
 
-			camera.GetImage(image);
-			image->Write("Lizzie.bmp");
-			//To get the images from the camera comment the line above and uncomment this one
-			BinaryImage *thresholdImage = image->ThresholdHSV(threshold);	// get just the green target pixels
-			thresholdImage->Write("/threshold.bmp");
-			BinaryImage *convexHullImage = thresholdImage->ConvexHull(false);  // fill in partial and full rectangles
-			//convexHullImage->Write("/ConvexHull.bmp");
-			BinaryImage *filteredImage = convexHullImage->ParticleFilter(criteria, 1);	//Remove small particles
-			//filteredImage->Write("Filtered.bmp");
+		Threshold threshold(60, 100, 90, 255, 20, 255); //Lower hue, upper hue, lower saturation, higher saturation, lower lum, higher lum
+		ParticleFilterCriteria2 criteria[] = { { IMAQ_MT_AREA, AREA_MINIMUM,
+				65535, false, false } }; //Particle filter criteria, used to filter out small particles
+		AxisCamera &camera = AxisCamera::GetInstance(); //To use the Axis camera uncomment this line
 
-			vector<ParticleAnalysisReport> *reports = filteredImage->GetOrderedParticleAnalysisReports();  //get a particle analysis report for each particle
-			scores = new Scores[reports->size()];
-			
-			//Iterate through each particle, scoring it and determining whether it is a target or not
-			for (unsigned i = 0; i < reports->size(); i++) {
-				ParticleAnalysisReport *report = &(reports->at(i));
-				
-				scores[i].rectangularity = scoreRectangularity(report);
-				scores[i].aspectRatioOuter = scoreAspectRatio(filteredImage, report, true);
-				scores[i].aspectRatioInner = scoreAspectRatio(filteredImage, report, false);			
-				scores[i].xEdge = scoreXEdge(thresholdImage, report);
-				scores[i].yEdge = scoreYEdge(thresholdImage, report);
-				
-				if(scoreCompare(scores[i], false))
-				{
-					printf("particle: %d  is a High Goal  centerX: %f  centerY: %f \n", i, report->center_mass_x_normalized, report->center_mass_y_normalized);
-					printf("Distance: %f \n", computeDistance(thresholdImage, report, false));
-				} else if (scoreCompare(scores[i], true)) {
-					printf("particle: %d  is a Middle Goal  centerX: %f  centerY: %f \n", i, report->center_mass_x_normalized, report->center_mass_y_normalized);
-					printf("Distance: %f \n", computeDistance(thresholdImage, report, true));
-				} else {
-					printf("particle: %d  is not a goal  centerX: %f  centerY: %f \n", i, report->center_mass_x_normalized, report->center_mass_y_normalized);
-				}
-				printf("rect: %f  ARinner: %f \n", scores[i].rectangularity, scores[i].aspectRatioInner);
-				printf("ARouter: %f  xEdge: %f  yEdge: %f  \n", scores[i].aspectRatioOuter, scores[i].xEdge, scores[i].yEdge);	
+		//		while (IsAutonomous() && IsEnabled()) {
+		/**
+		 * Do the image capture with the camera and apply the algorithm described above. This
+		 * sample will either get images from the camera or from an image file stored in the top
+		 * level directory in the flash memory on the cRIO. The file name in this case is "testImage.jpg"
+		 */
+		ColorImage *image;
+		image = new RGBImage("/PyramidRight_SmallGreen2.jpg"); // get the sample image from the cRIO flash
+
+		//camera.GetImage(image);
+		image->Write("Jon.bmp");
+		//To get the images from the camera comment the line above and uncomment this one
+		BinaryImage *thresholdImage = image->ThresholdHSV(threshold); // get just the green target pixels
+		thresholdImage->Write("/threshold.bmp");
+		BinaryImage *convexHullImage = thresholdImage->ConvexHull(false); // fill in partial and full rectangles
+		convexHullImage->Write("/ConvexHull.bmp");
+		BinaryImage *filteredImage = convexHullImage->ParticleFilter(criteria,
+				1); //Remove small particles
+		filteredImage->Write("Filtered.bmp");
+
+		vector<ParticleAnalysisReport> *reports =
+				filteredImage->GetOrderedParticleAnalysisReports(); //get a particle analysis report for each particle
+		scores = new Scores[reports->size()];
+
+		//Iterate through each particle, scoring it and determining whether it is a target or not
+		for (unsigned i = 0; i < reports->size(); i++) {
+			ParticleAnalysisReport *report = &(reports->at(i));
+
+			scores[i].rectangularity = scoreRectangularity(report);
+			scores[i].aspectRatioOuter = scoreAspectRatio(filteredImage,
+					report, true);
+			scores[i].aspectRatioInner = scoreAspectRatio(filteredImage,
+					report, false);
+			scores[i].xEdge = scoreXEdge(thresholdImage, report);
+			scores[i].yEdge = scoreYEdge(thresholdImage, report);
+
+			if (scoreCompare(scores[i], false)) {
+				printf(
+						"particle: %d  is a High Goal  centerX: %f  centerY: %f \n",
+						i, report->center_mass_x_normalized,
+						report->center_mass_y_normalized);
+				printf("Distance: %f \n",
+						computeDistance(thresholdImage, report, false));
+				dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "dist: %f",
+										computeDistance(filteredImage, report, false));
+								dsLCD->UpdateLCD();
+								i = reports->size();
+								
+			} else if (scoreCompare(scores[i], true)) {
+				printf(
+						"particle: %d  is a Middle Goal  centerX: %f  centerY: %f \n",
+						i, report->center_mass_x_normalized,
+						report->center_mass_y_normalized);
+				printf("Distance: %f \n",
+						computeDistance(thresholdImage, report, true));
+				dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "dist: %f",
+										computeDistance(filteredImage, report, true));
+								dsLCD->UpdateLCD();
+								i = reports->size();
+			} else {
+				printf(
+						"particle: %d  is not a goal  centerX: %f  centerY: %f \n",
+						i, report->center_mass_x_normalized,
+						report->center_mass_y_normalized);
+				dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "Not a rectangle Goal");
+							dsLCD->UpdateLCD();
 			}
-			printf("\n");
+			printf("rect: %f  ARinner: %f \n", scores[i].rectangularity,
+					scores[i].aspectRatioInner);
+			printf("ARouter: %f  xEdge: %f  yEdge: %f  \n",
+					scores[i].aspectRatioOuter, scores[i].xEdge,
+					scores[i].yEdge);
 			
-			// be sure to delete images after using them
-			delete filteredImage;
-			delete convexHullImage;
-			delete thresholdImage;
-			delete image;
-			
-			//delete allocated reports and Scores objects also
-			delete scores;
-			delete reports;
-//		}
+		}
+		printf("\n");
+
+		// be sure to delete images after using them
+		delete filteredImage;
+		delete convexHullImage;
+		delete thresholdImage;
+		delete image;
+
+		//delete allocated reports and Scores objects also
+		delete scores;
+		delete reports;
+		//		}
 	}
 
 	/**
 	 * Runs the motors with arcade steering. 
 	 */
-	void OperatorControl(void)
-	{
+	void OperatorControl(void) {
 		myRobot.SetSafetyEnabled(true);
-		while (IsOperatorControl())
-		{
-			Wait(0.005);				// wait for a motor update time
+		while (IsOperatorControl()) {
+			Wait(0.005); // wait for a motor update time
 		}
 	}
-	
+
 	/**
 	 * Computes the estimated distance to a target using the height of the particle in the image. For more information and graphics
 	 * showing the math behind this approach see the Vision Processing section of the ScreenStepsLive documentation.
@@ -169,19 +202,22 @@ public:
 	 * @param outer True if the particle should be treated as an outer target, false to treat it as a center target
 	 * @return The estimated distance to the target in Inches.
 	 */
-	double computeDistance (BinaryImage *image, ParticleAnalysisReport *report, bool outer) {
+	double computeDistance(BinaryImage *image, ParticleAnalysisReport *report,
+			bool outer) {
 		double rectShort, height;
 		int targetHeight;
-		
-		imaqMeasureParticle(image->GetImaqImage(), report->particleIndex, 0, IMAQ_MT_EQUIVALENT_RECT_SHORT_SIDE, &rectShort);
+
+		imaqMeasureParticle(image->GetImaqImage(), report->particleIndex, 0,
+				IMAQ_MT_EQUIVALENT_RECT_SHORT_SIDE, &rectShort);
 		//using the smaller of the estimated rectangle short side and the bounding rectangle height results in better performance
 		//on skewed rectangles
 		height = min(report->boundingRect.height, rectShort);
 		targetHeight = outer ? 29 : 21;
-		
-		return X_IMAGE_RES * targetHeight / (height * 12 * 2 * tan(VIEW_ANGLE*PI/(180*2)));
+
+		return X_IMAGE_RES * targetHeight / (height * 12 * 2 * tan(
+				VIEW_ANGLE * PI / (180 * 2)));
 	}
-	
+
 	/**
 	 * Computes a score (0-100) comparing the aspect ratio to the ideal aspect ratio for the target. This method uses
 	 * the equivalent rectangle sides to determine aspect ratio as it performs better as the target gets skewed by moving
@@ -193,24 +229,29 @@ public:
 	 * @param outer	Indicates whether the particle aspect ratio should be compared to the ratio for the inner target or the outer
 	 * @return The aspect ratio score (0-100)
 	 */
-	double scoreAspectRatio(BinaryImage *image, ParticleAnalysisReport *report, bool outer){
+	double scoreAspectRatio(BinaryImage *image, ParticleAnalysisReport *report,
+			bool outer) {
 		double rectLong, rectShort, idealAspectRatio, aspectRatio;
-		idealAspectRatio = outer ? (62/29) : (62/20);	//Dimensions of goal opening + 4 inches on all 4 sides for reflective tape
-		
-		imaqMeasureParticle(image->GetImaqImage(), report->particleIndex, 0, IMAQ_MT_EQUIVALENT_RECT_LONG_SIDE, &rectLong);
-		imaqMeasureParticle(image->GetImaqImage(), report->particleIndex, 0, IMAQ_MT_EQUIVALENT_RECT_SHORT_SIDE, &rectShort);
-		
+		idealAspectRatio = outer ? (62 / 29) : (62 / 20); //Dimensions of goal opening + 4 inches on all 4 sides for reflective tape
+
+		imaqMeasureParticle(image->GetImaqImage(), report->particleIndex, 0,
+				IMAQ_MT_EQUIVALENT_RECT_LONG_SIDE, &rectLong);
+		imaqMeasureParticle(image->GetImaqImage(), report->particleIndex, 0,
+				IMAQ_MT_EQUIVALENT_RECT_SHORT_SIDE, &rectShort);
+
 		//Divide width by height to measure aspect ratio
-		if(report->boundingRect.width > report->boundingRect.height){
+		if (report->boundingRect.width > report->boundingRect.height) {
 			//particle is wider than it is tall, divide long by short
-			aspectRatio = 100*(1-fabs((1-((rectLong/rectShort)/idealAspectRatio))));
+			aspectRatio = 100 * (1 - fabs(
+					(1 - ((rectLong / rectShort) / idealAspectRatio))));
 		} else {
 			//particle is taller than it is wide, divide short by long
-			aspectRatio = 100*(1-fabs((1-((rectShort/rectLong)/idealAspectRatio))));
+			aspectRatio = 100 * (1 - fabs(
+					(1 - ((rectShort / rectLong) / idealAspectRatio))));
 		}
-		return (max(0, min(aspectRatio, 100)));		//force to be in range 0-100
+		return (max(0, min(aspectRatio, 100))); //force to be in range 0-100
 	}
-	
+
 	/**
 	 * Compares scores to defined limits and returns true if the particle appears to be a target
 	 * 
@@ -219,11 +260,11 @@ public:
 	 * 
 	 * @return True if the particle meets all limits, false otherwise
 	 */
-	bool scoreCompare(Scores scores, bool outer){
+	bool scoreCompare(Scores scores, bool outer) {
 		bool isTarget = true;
 
 		isTarget &= scores.rectangularity > RECTANGULARITY_LIMIT;
-		if(outer){
+		if (outer) {
 			isTarget &= scores.aspectRatioOuter > ASPECT_RATIO_LIMIT;
 		} else {
 			isTarget &= scores.aspectRatioInner > ASPECT_RATIO_LIMIT;
@@ -233,7 +274,7 @@ public:
 
 		return isTarget;
 	}
-	
+
 	/**
 	 * Computes a score (0-100) estimating how rectangular the particle is by comparing the area of the particle
 	 * to the area of the bounding box surrounding it. A perfect rectangle would cover the entire bounding box.
@@ -241,14 +282,15 @@ public:
 	 * @param report The Particle Analysis Report for the particle to score
 	 * @return The rectangularity score (0-100)
 	 */
-	double scoreRectangularity(ParticleAnalysisReport *report){
-		if(report->boundingRect.width*report->boundingRect.height !=0){
-			return 100*report->particleArea/(report->boundingRect.width*report->boundingRect.height);
+	double scoreRectangularity(ParticleAnalysisReport *report) {
+		if (report->boundingRect.width * report->boundingRect.height != 0) {
+			return 100 * report->particleArea / (report->boundingRect.width
+					* report->boundingRect.height);
 		} else {
 			return 0;
-		}	
+		}
 	}
-	
+
 	/**
 	 * Computes a score based on the match between a template profile and the particle profile in the X direction. This method uses the
 	 * the column averages and the profile defined at the top of the sample to look for the solid vertical edges with
@@ -259,20 +301,23 @@ public:
 	 * 
 	 * @return The X Edge Score (0-100)
 	 */
-	double scoreXEdge(BinaryImage *image, ParticleAnalysisReport *report){
+	double scoreXEdge(BinaryImage *image, ParticleAnalysisReport *report) {
 		double total = 0;
-		LinearAverages *averages = imaqLinearAverages2(image->GetImaqImage(), IMAQ_COLUMN_AVERAGES, report->boundingRect);
-		for(int i=0; i < (averages->columnCount); i++){
-			if(xMin[i*(XMINSIZE-1)/averages->columnCount] < averages->columnAverages[i] 
-			   && averages->columnAverages[i] < xMax[i*(XMAXSIZE-1)/averages->columnCount]){
+		LinearAverages *averages = imaqLinearAverages2(image->GetImaqImage(),
+				IMAQ_COLUMN_AVERAGES, report->boundingRect);
+		for (int i = 0; i < (averages->columnCount); i++) {
+			if (xMin[i * (XMINSIZE - 1) / averages->columnCount]
+					< averages->columnAverages[i]
+					&& averages->columnAverages[i] < xMax[i * (XMAXSIZE - 1)
+							/ averages->columnCount]) {
 				total++;
 			}
 		}
-		total = 100*total/(averages->columnCount);		//convert to score 0-100
-		imaqDispose(averages);							//let IMAQ dispose of the averages struct
+		total = 100 * total / (averages->columnCount); //convert to score 0-100
+		imaqDispose(averages); //let IMAQ dispose of the averages struct
 		return total;
 	}
-	
+
 	/**
 	 * Computes a score based on the match between a template profile and the particle profile in the Y direction. This method uses the
 	 * the row averages and the profile defined at the top of the sample to look for the solid horizontal edges with
@@ -283,20 +328,23 @@ public:
 	 * 
 	 * @return The Y Edge score (0-100)
 	 */
-	double scoreYEdge(BinaryImage *image, ParticleAnalysisReport *report){
+	double scoreYEdge(BinaryImage *image, ParticleAnalysisReport *report) {
 		double total = 0;
-		LinearAverages *averages = imaqLinearAverages2(image->GetImaqImage(), IMAQ_ROW_AVERAGES, report->boundingRect);
-		for(int i=0; i < (averages->rowCount); i++){
-			if(yMin[i*(YMINSIZE-1)/averages->rowCount] < averages->rowAverages[i] 
-			   && averages->rowAverages[i] < yMax[i*(YMAXSIZE-1)/averages->rowCount]){
+		LinearAverages *averages = imaqLinearAverages2(image->GetImaqImage(),
+				IMAQ_ROW_AVERAGES, report->boundingRect);
+		for (int i = 0; i < (averages->rowCount); i++) {
+			if (yMin[i * (YMINSIZE - 1) / averages->rowCount]
+					< averages->rowAverages[i] && averages->rowAverages[i]
+					< yMax[i * (YMAXSIZE - 1) / averages->rowCount]) {
 				total++;
 			}
 		}
-		total = 100*total/(averages->rowCount);		//convert to score 0-100
-		imaqDispose(averages);						//let IMAQ dispose of the averages struct
+		total = 100 * total / (averages->rowCount); //convert to score 0-100
+		imaqDispose(averages); //let IMAQ dispose of the averages struct
 		return total;
-	}		
+	}
 };
 
-START_ROBOT_CLASS(VisionSample2013);
+START_ROBOT_CLASS(VisionSample2013)
+;
 
