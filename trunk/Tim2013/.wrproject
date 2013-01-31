@@ -244,12 +244,12 @@
         </mapAttribute>
     </attributes>
     <buildtargets>
-        <buildtarget buildtool="Linker" name="Tim2013" passed="false" targetname="Tim2013">
+        <buildtarget buildtool="Linker" name="SimpleTemplate" passed="false" targetname="SimpleTemplate">
             <contents>
-                <buildtargetreference name="/Tim2013/Tim2013_partialImage"/>
+                <buildtargetreference name="/Tim2013/SimpleTemplate_partialImage"/>
             </contents>
         </buildtarget>
-        <buildtarget buildtool="Partial Image Linker" name="Tim2013_partialImage" passed="true" targetname="Tim2013_partialImage">
+        <buildtarget buildtool="Partial Image Linker" name="SimpleTemplate_partialImage" passed="true" targetname="SimpleTemplate_partialImage">
             <contents>
                 <folder name="/Tim2013" recursive="true"/>
             </contents>
