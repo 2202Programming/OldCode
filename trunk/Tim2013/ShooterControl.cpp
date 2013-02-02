@@ -10,7 +10,11 @@
 
 #define SHOOTERMOTORPORT1 5
 #define SHOOTERMOTORPORT2 6
-#define SHOOTERSPEEDINCREMENT .1
+#define SHOOTERANGLEMOTORPORT 7
+#define SHOOTERSPEEDSTEP .1
+#define UPPERLIMITPORT 1
+#define LOWERLIMITPORT 2
+#define ANGLEMOTORLIFTSTEP .30
 #define SHOOTERSPEEDINCREMENTRESETPT 0.0
 
 ShooterControl::ShooterControl() {
@@ -18,90 +22,71 @@ ShooterControl::ShooterControl() {
 	dsLCD = DriverStationLCD::GetInstance();
 	shooterMotor1 = new Jaguar(SHOOTERMOTORPORT1);
 	shooterMotor2 = new Jaguar(SHOOTERMOTORPORT2);
-
-	liftMotor = new Jaguar(8); //temporary, please get rid of me
+	AngleMotor = new Jaguar(SHOOTERANGLEMOTORPORT);
 	lShooterSpeed = 0.0;
 	rShooterSpeed = 0.0;
+	upperLimit = new DigitalInput(UPPERLIMITPORT);
+	lowerLimit= new DigitalInput(LOWERLIMITPORT);
 }
 
-void ShooterControl::initialize() {
+void ShooterControl::initialize(){
+
 }
 
 void ShooterControl::initializeAutonomous() {
 }
-//this method is an experiment for shooting calibration, will be removed from final program
-//this method cycles though the shooter speeds
-void ShooterControl::ExperimentShooter() {
-
+//this method cycles though the shooter speeds in 4 steps
+void ShooterControl::ShooterCycleSpeed() {
+	//
 	bool isLBumperPressed = xbox->isLBumperPressed();
 	if (isLBumperPressed) {
-		lShooterSpeed = speedIncriment(lShooterSpeed);
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "left speed: %f",
-				lShooterSpeed);
-		dsLCD->UpdateLCD();
+		//lShooterSpeed = speedIncriment(lShooterSpeed); //backmotor
+		
+		lShooterSpeed = (lShooterSpeed-=SHOOTERSPEEDSTEP ) < 0 ? 0:lShooterSpeed;
+		rShooterSpeed = lShooterSpeed;
+		
 	}
-	shooterMotor1->Set(lShooterSpeed);
 
 	bool isRBumperPressed = xbox->isRBumperPressed();
 	if (isRBumperPressed) {
-		rShooterSpeed = speedIncriment(rShooterSpeed);
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "right speed: %f",
-				rShooterSpeed);
-		dsLCD->UpdateLCD();
+		lShooterSpeed = (lShooterSpeed+=SHOOTERSPEEDSTEP ) > 1.0 ? 1:lShooterSpeed;
+		rShooterSpeed = lShooterSpeed;
+		
 	}
-	shooterMotor2->Set(rShooterSpeed);
-}
-/*
- * ShootMotor:
- * When the Right trigger is pressed, the Shooter motor turns on. 
- * Must be held.
- */
-float ShooterControl::speedIncriment(float speed) {
-		speed += SHOOTERSPEEDINCREMENT;
-		if (speed > 1.01) {
-			speed = 0.0;
-		}
 	
-	return speed;
-}
-void ShooterControl::ShootMotor() {
-
-	/*
-	 * Left bumper = increase speed
-	 */
-	// speed incriment using left bumper.
-	/*
-	 * Right trigger = turn on shooter motor
-	 */
-	float isTriggerPressed = xbox->getAxisTrigger();
-	float shootSpeed = 0.0;
-	if (isTriggerPressed <= -.01) {
-		shootSpeed = speedIncriment(shootSpeed);
-	}
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "speed: %f", shootSpeed);
+	
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "left speed: %f",
+			lShooterSpeed);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "right speed: %f",
+			rShooterSpeed);
 	dsLCD->UpdateLCD();
-	shooterMotor1->Set(-shootSpeed);
-	shooterMotor2->Set(-shootSpeed);
+	
+	shooterMotor1->Set(lShooterSpeed);
+	shooterMotor2->Set(rShooterSpeed);
 
 }
-/*
- * LiftMotor: This is for SEBASTIAN only. GET RID OF FOR TIM.
- * When X is pressed, the lift is turned on. Toggles.
- * 
- */
-void ShooterControl::LiftMotor() {
-	//temporary, please get rid of me
-	if (xbox->isXHeld()) {
-		liftMotor->Set(1);
-	} else {
-		liftMotor->Set(0);
+// this method sets the angle of the shooter using a motor. when elevation is increased when right trigger is pressed, and and it is decreased
+//when left trigger is pressed. 
+void ShooterControl::ShooterAngle(){
+	bool isRtriggerPressed = xbox->isRightTriggerHeld();
+	
+	if(isRtriggerPressed && upperLimit->Get() == 0){
+		AngleMotor->Set(ANGLEMOTORLIFTSTEP);
+	}else{
+		AngleMotor->Set(0);
 	}
+	
+	bool isLtriggerPressed = xbox->isLeftTriggerHeld();
+		if(isLtriggerPressed && lowerLimit->Get()==0){
+			AngleMotor->Set(-ANGLEMOTORLIFTSTEP);
+		}else{
+			AngleMotor->Set(0);
+		}
 }
 
 //press right trigger to shoot
 void ShooterControl::run() {
-	//ShootMotor();
-	ExperimentShooter();
+	ShooterCycleSpeed();
 	//LiftMotor();
 }
 
