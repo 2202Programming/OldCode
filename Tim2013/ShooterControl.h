@@ -19,13 +19,14 @@ private:
 	
 	Jaguar* shooterMotor1;
 	Jaguar* shooterMotor2;
-	Jaguar* liftMotor; //temp, please get rid of me
+	Jaguar* AngleMotor;
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
-	float speedIncriment(float speed);
-    void LiftMotor();
-    void ShootMotor();
-    void ExperimentShooter();
+	DigitalInput *lowerLimit;
+	DigitalInput *upperLimit;
+    void ShooterCycleSpeed();
+    void ShooterAngle();
+
     //the following are the varriables use in experiment method
     float lShooterSpeed;
     float rShooterSpeed;
