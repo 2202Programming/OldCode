@@ -162,11 +162,16 @@ VisionSample2013_partialImage/$(MODE_DIR)/% : LIBPATH =
 VisionSample2013_partialImage/$(MODE_DIR)/% : LIBS = 
 VisionSample2013_partialImage/$(MODE_DIR)/% : OBJ_DIR := VisionSample2013_partialImage/$(MODE_DIR)
 
+VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionControl.o : $(PRJ_ROOT_DIR)/VisionControl.cpp $(FORCE_FILE_BUILD)
+	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
+
+
 VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.o : $(PRJ_ROOT_DIR)/VisionSample2013.cpp $(FORCE_FILE_BUILD)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
-OBJECTS_VisionSample2013_partialImage = VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.o
+OBJECTS_VisionSample2013_partialImage = VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionControl.o \
+	 VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.o
 
 VisionSample2013_partialImage/$(MODE_DIR)/VisionSample2013_partialImage.o : $(OBJECTS_VisionSample2013_partialImage)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc -r -nostdlib -Wl,-X  -o "$@" $(OBJECTS_VisionSample2013_partialImage) $(LIBPATH) $(LIBS) $(ADDED_LIBPATH) $(ADDED_LIBS)  && if [ "$(EXPAND_DBG)" = "1" ]; then plink "$@";fi
@@ -180,7 +185,7 @@ VisionSample2013_partialImage/$(MODE_DIR)/VisionSample2013_partialImage_clean :
 
 force : 
 
-DEP_FILES := VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.d
+DEP_FILES := VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionControl.d VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.d
 -include $(DEP_FILES)
 
 
