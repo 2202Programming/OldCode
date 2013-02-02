@@ -8,23 +8,19 @@
 #include "ShooterControl.h"
 #include "XboxController.h"
 
-#define SHOOTERMOTORPORT1 5
-#define SHOOTERMOTORPORT2 6
-#define SHOOTERANGLEMOTORPORT 7
-#define SHOOTERSPEEDSTEP .1
-#define UPPERLIMITPORT 1
-#define LOWERLIMITPORT 2
-#define ANGLEMOTORLIFTSTEP .30
-#define SHOOTERSPEEDINCREMENTRESETPT 0.0
 
 ShooterControl::ShooterControl() {
+	
 	xbox = XboxController::getInstance();
 	dsLCD = DriverStationLCD::GetInstance();
+	
+	AngleMotor = new Jaguar(SHOOTERANGLEMOTORPORT);
+	
 	shooterMotor1 = new Jaguar(SHOOTERMOTORPORT1);
 	shooterMotor2 = new Jaguar(SHOOTERMOTORPORT2);
-	AngleMotor = new Jaguar(SHOOTERANGLEMOTORPORT);
-	lShooterSpeed = 0.0;
-	rShooterSpeed = 0.0;
+	Shooter1Speed = 0.0;
+	Shooter2Speed = 0.0;
+	
 	upperLimit = new DigitalInput(UPPERLIMITPORT);
 	lowerLimit= new DigitalInput(LOWERLIMITPORT);
 }
@@ -35,50 +31,62 @@ void ShooterControl::initialize(){
 
 void ShooterControl::initializeAutonomous() {
 }
+
 //this method cycles though the shooter speeds in 4 steps
 void ShooterControl::ShooterCycleSpeed() {
-	//
+
 	bool isLBumperPressed = xbox->isLBumperPressed();
+	
+	// if left bumper is pressed reduce the speed for both motors
 	if (isLBumperPressed) {
-		//lShooterSpeed = speedIncriment(lShooterSpeed); //backmotor
-		
-		lShooterSpeed = (lShooterSpeed-=SHOOTERSPEEDSTEP ) < 0 ? 0:lShooterSpeed;
-		rShooterSpeed = lShooterSpeed;
-		
+		Shooter1Speed = (Shooter1Speed-=SHOOTERSPEEDSTEP ) < 0 ? 0:Shooter1Speed;
+	
+		// Both variables are set to the same speed, but we are using two variables incase we want to set two different values.
+		// From final code extra variable can be removed
+		Shooter2Speed = Shooter1Speed;
 	}
 
+	// if right bumper is pressed increase the speed for both motors
 	bool isRBumperPressed = xbox->isRBumperPressed();
+	
 	if (isRBumperPressed) {
-		lShooterSpeed = (lShooterSpeed+=SHOOTERSPEEDSTEP ) > 1.0 ? 1:lShooterSpeed;
-		rShooterSpeed = lShooterSpeed;
-		
+		Shooter1Speed = (Shooter1Speed+=SHOOTERSPEEDSTEP ) > 1.0 ? 1:Shooter1Speed;
+
+		// Both variables are set to the same speed, but we are using two variables incase we want to set two different values.
+		// From final code extra variable can be removed
+		Shooter2Speed = Shooter1Speed;
 	}
 	
 	
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "left speed: %f",
-			lShooterSpeed);
+			Shooter1Speed);
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "right speed: %f",
-			rShooterSpeed);
+			Shooter2Speed);
 	dsLCD->UpdateLCD();
 	
-	shooterMotor1->Set(lShooterSpeed);
-	shooterMotor2->Set(rShooterSpeed);
+	shooterMotor1->Set(Shooter1Speed);
+	shooterMotor2->Set(Shooter2Speed);
 
 }
-// this method sets the angle of the shooter using a motor. when elevation is increased when right trigger is pressed, and and it is decreased
+// this method sets the angle of the shooter using a motor. elevation is increased when right trigger is pressed, and it is decreased
 //when left trigger is pressed. 
 void ShooterControl::ShooterAngle(){
-	bool isRtriggerPressed = xbox->isRightTriggerHeld();
 	
-	if(isRtriggerPressed && upperLimit->Get() == 0){
-		AngleMotor->Set(ANGLEMOTORLIFTSTEP);
+	// Check if left trigger is pressed. if it is then start the lift motor in reverse direction to reduce the elivation of the shooter
+	// lowermimit digital input of 1 indicates that there is a room to lower the elivation and we can continue to reduce the angle
+	// NOTE: isRightTriggerHeld actually returns left trigger value. 
+	bool isLtriggerPressed = xbox->isRightTriggerHeld();
+	
+	if(isLtriggerPressed && lowerLimit->Get() == 1 ){
+		AngleMotor->Set(-ANGLEMOTORLIFTSPEED);
 	}else{
 		AngleMotor->Set(0);
 	}
 	
-	bool isLtriggerPressed = xbox->isLeftTriggerHeld();
-		if(isLtriggerPressed && lowerLimit->Get()==0){
-			AngleMotor->Set(-ANGLEMOTORLIFTSTEP);
+	// same as above except, following lines increse the elivation
+	bool isRtriggerPressed = xbox->isLeftTriggerHeld();
+		if(isRtriggerPressed && upperLimit->Get() == 1){
+			AngleMotor->Set(ANGLEMOTORLIFTSPEED);
 		}else{
 			AngleMotor->Set(0);
 		}
@@ -87,6 +95,6 @@ void ShooterControl::ShooterAngle(){
 //press right trigger to shoot
 void ShooterControl::run() {
 	ShooterCycleSpeed();
-	//LiftMotor();
+	ShooterAngle();
 }
 
