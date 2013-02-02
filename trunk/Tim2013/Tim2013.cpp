@@ -32,6 +32,7 @@ public:
 		dsLCD->UpdateLCD();
 
 		driveControl.initialize();
+
 		while (IsOperatorControl()) {
 			driveControl.run();
 			shooterControl.run();
