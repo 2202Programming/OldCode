@@ -2,6 +2,7 @@
 #include "Vision/RGBImage.h"
 #include "Vision/BinaryImage.h"
 #include "Math.h"
+#include "VisionControl.h"
 
 /**
  * Sample program to use NIVision to find rectangles in the scene that are illuminated
@@ -61,6 +62,7 @@ class VisionSample2013: public SimpleRobot {
 	struct Scores {
 		double rectangularity;
 		double aspectRatioInner;
+		double aspectRatioLittle;
 		double aspectRatioOuter;
 		double xEdge;
 		double yEdge;
@@ -70,6 +72,7 @@ class VisionSample2013: public SimpleRobot {
 	RobotDrive myRobot; // robot drive system
 	Joystick stick; // only joystick
 	Scores *scores;
+	VisionControl *visionControl;
 	DriverStationLCD *dsLCD;
 
 public:
@@ -77,11 +80,12 @@ public:
 		myRobot(1, 2), // these must be initialized in the same order
 				stick(1) // as they are declared above.
 	{
+		visionControl = new VisionControl();
 		myRobot.SetExpiration(0.1);
 		myRobot.SetSafetyEnabled(false);
 		dsLCD = DriverStationLCD::GetInstance();
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Vision Sample 0.2");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Vision Sample 0.3");
 		dsLCD->UpdateLCD();
 	}
 
@@ -89,11 +93,18 @@ public:
 	 * Image processing code to identify 2013 Vision targets
 	 */
 	void Autonomous(void) {
-
-		Threshold threshold(60, 100, 90, 255, 20, 255); //Lower hue, upper hue, lower saturation, higher saturation, lower lum, higher lum
+		visionControl->initialize();
+		visionControl->run();
+#ifdef OLDVISIONSTYLE
+		dsLCD->Clear();
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line4,
+				"Vision sample, start writing");
+		dsLCD->UpdateLCD();
+		//Threshold threshold(60, 100, 90, 255, 20, 255);
+		Threshold threshold(90, 140, 100, 255, 90, 255); //Lower hue, upper hue, lower saturation, higher saturation, lower lum, higher lum
 		ParticleFilterCriteria2 criteria[] = { { IMAQ_MT_AREA, AREA_MINIMUM,
 				65535, false, false } }; //Particle filter criteria, used to filter out small particles
-		AxisCamera &camera = AxisCamera::GetInstance(); //To use the Axis camera uncomment this line
+	//	AxisCamera &camera = AxisCamera::GetInstance(); //To use the Axis camera uncomment this line
 
 		//		while (IsAutonomous() && IsEnabled()) {
 		/**
@@ -102,25 +113,30 @@ public:
 		 * level directory in the flash memory on the cRIO. The file name in this case is "testImage.jpg"
 		 */
 		ColorImage *image;
-		image = new RGBImage("/PyramidRight_SmallGreen2.jpg"); // get the sample image from the cRIO flash
+		image = new RGBImage("/Jon.jpg"); // get the sample image from the cRIO flash
 
-		//camera.GetImage(image);
-		image->Write("Jon.bmp");
+		//image = camera-> GetImage();
+		//image->Write("Jon.bmp");
 		//To get the images from the camera comment the line above and uncomment this one
 		BinaryImage *thresholdImage = image->ThresholdHSV(threshold); // get just the green target pixels
 		thresholdImage->Write("/threshold.bmp");
 		BinaryImage *convexHullImage = thresholdImage->ConvexHull(false); // fill in partial and full rectangles
-		convexHullImage->Write("/ConvexHull.bmp");
+		convexHullImage->Write("/ConvexH2ull.bmp");
 		BinaryImage *filteredImage = convexHullImage->ParticleFilter(criteria,
 				1); //Remove small particles
-		filteredImage->Write("Filtered.bmp");
+		filteredImage->Write("/Filtered2.bmp");
 
 		vector<ParticleAnalysisReport> *reports =
 				filteredImage->GetOrderedParticleAnalysisReports(); //get a particle analysis report for each particle
 		scores = new Scores[reports->size()];
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "Particles: %i",
+				filteredImage->GetNumberParticles());
+		dsLCD->UpdateLCD();
 
 		//Iterate through each particle, scoring it and determining whether it is a target or not
 		for (unsigned i = 0; i < reports->size(); i++) {
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "hihihi");
+							dsLCD->UpdateLCD();
 			ParticleAnalysisReport *report = &(reports->at(i));
 
 			scores[i].rectangularity = scoreRectangularity(report);
@@ -128,6 +144,8 @@ public:
 					report, true);
 			scores[i].aspectRatioInner = scoreAspectRatio(filteredImage,
 					report, false);
+			scores[i].aspectRatioLittle = scoreLittleAspectRatio(filteredImage,
+					report);
 			scores[i].xEdge = scoreXEdge(thresholdImage, report);
 			scores[i].yEdge = scoreYEdge(thresholdImage, report);
 
@@ -139,10 +157,11 @@ public:
 				printf("Distance: %f \n",
 						computeDistance(thresholdImage, report, false));
 				dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "dist: %f",
-										computeDistance(filteredImage, report, false));
-								dsLCD->UpdateLCD();
-								i = reports->size();
-								
+						computeDistance(filteredImage, report, false));
+				dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "hihihi");
+				dsLCD->UpdateLCD();
+				i = reports->size();
+
 			} else if (scoreCompare(scores[i], true)) {
 				printf(
 						"particle: %d  is a Middle Goal  centerX: %f  centerY: %f \n",
@@ -151,25 +170,40 @@ public:
 				printf("Distance: %f \n",
 						computeDistance(thresholdImage, report, true));
 				dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "dist: %f",
-										computeDistance(filteredImage, report, true));
-								dsLCD->UpdateLCD();
-								i = reports->size();
+						computeDistance(filteredImage, report, true));
+				dsLCD->UpdateLCD();
+				i = reports->size();
+			} else if (scoreCompare(scores[i], false, true)) {
+				printf(
+						"particle: %d  is a low goal  centerX: %f  centerY: %f \n",
+						i, report->center_mass_x_normalized,
+						report->center_mass_y_normalized);
+				printf("Distance: %f \n",
+						computeDistance(thresholdImage, report, true, true));
+				dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "dist: %f",
+						computeDistance(filteredImage, report, true, true));
+				dsLCD->UpdateLCD();
+				i = reports->size();
 			} else {
 				printf(
 						"particle: %d  is not a goal  centerX: %f  centerY: %f \n",
 						i, report->center_mass_x_normalized,
 						report->center_mass_y_normalized);
-				dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "Not a rectangle Goal");
-							dsLCD->UpdateLCD();
+				dsLCD->PrintfLine(DriverStationLCD::kUser_Line3,
+						"Not a rectangle Goal");
+				dsLCD->UpdateLCD();
+
 			}
 			printf("rect: %f  ARinner: %f \n", scores[i].rectangularity,
 					scores[i].aspectRatioInner);
 			printf("ARouter: %f  xEdge: %f  yEdge: %f  \n",
 					scores[i].aspectRatioOuter, scores[i].xEdge,
 					scores[i].yEdge);
-			
+
 		}
 		printf("\n");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "done writing");
+		dsLCD->UpdateLCD();
 
 		// be sure to delete images after using them
 		delete filteredImage;
@@ -181,18 +215,20 @@ public:
 		delete scores;
 		delete reports;
 		//		}
+#endif
 	}
 
 	/**
 	 * Runs the motors with arcade steering. 
 	 */
 	void OperatorControl(void) {
+		
 		myRobot.SetSafetyEnabled(true);
 		while (IsOperatorControl()) {
 			Wait(0.005); // wait for a motor update time
 		}
 	}
-
+#ifdef OLDVISIONSTYLE
 	/**
 	 * Computes the estimated distance to a target using the height of the particle in the image. For more information and graphics
 	 * showing the math behind this approach see the Vision Processing section of the ScreenStepsLive documentation.
@@ -203,7 +239,7 @@ public:
 	 * @return The estimated distance to the target in Inches.
 	 */
 	double computeDistance(BinaryImage *image, ParticleAnalysisReport *report,
-			bool outer) {
+			bool outer, bool isLittle = false) {
 		double rectShort, height;
 		int targetHeight;
 
@@ -212,7 +248,10 @@ public:
 		//using the smaller of the estimated rectangle short side and the bounding rectangle height results in better performance
 		//on skewed rectangles
 		height = min(report->boundingRect.height, rectShort);
-		targetHeight = outer ? 29 : 21;
+		targetHeight = outer ? 29 : 20; // original is 20
+		if (isLittle) {
+			targetHeight = 32;
+		}
 
 		return X_IMAGE_RES * targetHeight / (height * 12 * 2 * tan(
 				VIEW_ANGLE * PI / (180 * 2)));
@@ -252,29 +291,63 @@ public:
 		return (max(0, min(aspectRatio, 100))); //force to be in range 0-100
 	}
 
-	/**
+	double scoreLittleAspectRatio(BinaryImage *image,
+			ParticleAnalysisReport *report) {
+		double rectLong, rectShort, idealAspectRatio, aspectRatio;
+		idealAspectRatio = (37 / 32); // Dimensions of low goal opening 
+
+		imaqMeasureParticle(image->GetImaqImage(), report->particleIndex, 0,
+				IMAQ_MT_EQUIVALENT_RECT_LONG_SIDE, &rectLong);
+		imaqMeasureParticle(image->GetImaqImage(), report->particleIndex, 0,
+				IMAQ_MT_EQUIVALENT_RECT_SHORT_SIDE, &rectShort);
+
+		//Divide width by height to measure aspect ratio
+		if (report->boundingRect.width > report->boundingRect.height) {
+			//particle is wider than it is tall, divide long by short
+			aspectRatio = 100 * (1 - fabs(
+					(1 - ((rectLong / rectShort) / idealAspectRatio))));
+		} else {
+			//particle is taller than it is wide, divide short by long
+			aspectRatio = 100 * (1 - fabs(
+					(1 - ((rectShort / rectLong) / idealAspectRatio))));
+		}
+		return (max(0, min(aspectRatio, 100))); //force to be in range 0-100
+	}
+	/*
+	 
 	 * Compares scores to defined limits and returns true if the particle appears to be a target
 	 * 
 	 * @param scores The structure containing the scores to compare
-	 * @param outer True if the particle should be treated as an outer target, false to treat it as a center target
-	 * 
+	 * @param outer True if the particle should be treated as an outer target, false to treat it as a center target, 
 	 * @return True if the particle meets all limits, false otherwise
 	 */
-	bool scoreCompare(Scores scores, bool outer) {
+	bool scoreCompare(Scores scores, bool outer, bool isLittle = false) {
+		if (!isLittle) {
+			bool isTarget = true;
+
+			isTarget &= scores.rectangularity > RECTANGULARITY_LIMIT;
+			if (outer) {
+				isTarget &= scores.aspectRatioOuter > ASPECT_RATIO_LIMIT;
+			} else {
+				isTarget &= scores.aspectRatioInner > ASPECT_RATIO_LIMIT;
+			}
+			isTarget &= scores.xEdge > X_EDGE_LIMIT;
+			isTarget &= scores.yEdge > Y_EDGE_LIMIT;
+
+			return isTarget;
+		}
 		bool isTarget = true;
 
 		isTarget &= scores.rectangularity > RECTANGULARITY_LIMIT;
-		if (outer) {
-			isTarget &= scores.aspectRatioOuter > ASPECT_RATIO_LIMIT;
-		} else {
-			isTarget &= scores.aspectRatioInner > ASPECT_RATIO_LIMIT;
-		}
+
+		isTarget &= scores.aspectRatioInner > ASPECT_RATIO_LIMIT;
+
 		isTarget &= scores.xEdge > X_EDGE_LIMIT;
 		isTarget &= scores.yEdge > Y_EDGE_LIMIT;
 
 		return isTarget;
-	}
 
+	}
 	/**
 	 * Computes a score (0-100) estimating how rectangular the particle is by comparing the area of the particle
 	 * to the area of the bounding box surrounding it. A perfect rectangle would cover the entire bounding box.
@@ -343,6 +416,7 @@ public:
 		imaqDispose(averages); //let IMAQ dispose of the averages struct
 		return total;
 	}
+#endif
 };
 
 START_ROBOT_CLASS(VisionSample2013)
