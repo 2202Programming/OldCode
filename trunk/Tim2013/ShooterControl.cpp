@@ -75,7 +75,7 @@ void ShooterControl::ShooterAngle(){
 	// Check if left trigger is pressed. if it is then start the lift motor in reverse direction to reduce the elivation of the shooter
 	// lowermimit digital input of 1 indicates that there is a room to lower the elivation and we can continue to reduce the angle
 	// NOTE: isRightTriggerHeld actually returns left trigger value. 
-	bool isLtriggerPressed = xbox->isRightTriggerHeld();
+	bool isLtriggerPressed = xbox->isXHeld();
 	
 	if(isLtriggerPressed && lowerLimit->Get() == 1 ){
 		AngleMotor->Set(-ANGLEMOTORLIFTSPEED);
@@ -84,7 +84,7 @@ void ShooterControl::ShooterAngle(){
 	}
 	
 	// same as above except, following lines increse the elivation
-	bool isRtriggerPressed = xbox->isLeftTriggerHeld();
+	bool isRtriggerPressed = xbox->isYHeld();
 		if(isRtriggerPressed && upperLimit->Get() == 1){
 			AngleMotor->Set(ANGLEMOTORLIFTSPEED);
 		}else{
