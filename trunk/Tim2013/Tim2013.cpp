@@ -33,11 +33,11 @@ public:
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Operator control");
 		dsLCD->UpdateLCD();
 
-	//	driveControl.initialize();
+		driveControl.initialize();
 		pneumaticsControl.initialize();
 		while (IsOperatorControl()) {
 		//	driveControl.run();
-		//	shooterControl.run();
+			shooterControl.run();
 			pneumaticsControl.run();
 			Wait(0.005); // wait for a motor update time
 		}
