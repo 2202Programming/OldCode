@@ -10,13 +10,14 @@ class ShooterControl {
 public:
 	~ShooterControl() {
 	}
-	ShooterControl();
+	static ShooterControl *getInstance();
 	void initialize();
 	void initializeAutonomous();
 	void run();
-
+	bool isRunning();
 private:
-	
+	ShooterControl();
+
 	#define SHOOTERMOTORPORT1 5
 	#define SHOOTERMOTORPORT2 6
 	#define SHOOTERANGLEMOTORPORT 7
@@ -26,6 +27,7 @@ private:
 	#define ANGLEMOTORLIFTSPEED 0.3
 	#define SHOOTERSPEEDINCREMENTRESETPT 0.0
 
+	
 	float Shooter1Speed;
 	float Shooter2Speed;
 	Jaguar* shooterMotor1;
@@ -38,9 +40,10 @@ private:
 
 	DigitalInput *lowerLimit;
 	DigitalInput *upperLimit;
-    
+	
 	void ShooterCycleSpeed();
     void ShooterAngle();
+    
 
    
 

@@ -4,13 +4,15 @@
  *  Created on: Feb 4, 2013
  *      Author: Beasty
  */
-
+#include "ShooterControl.h"
 #include "PneumaticsControl.h"
 
 PneumaticsControl::PneumaticsControl() {
 
 	xbox = XboxController::getInstance();
 	dsLCD = DriverStationLCD::GetInstance();
+	shooterControl = ShooterControl::getInstance();
+	
 	// pressure switch is at Digital input 3,
 	// compressor channel is at relay output 1,
 	compressor = new Compressor(1, 4);
@@ -34,8 +36,8 @@ void PneumaticsControl::initializeAutonomous() {
  * otherwise it is back and allows a disk to be loaded.
  */
 void PneumaticsControl::fire() {
-
-	if (xbox->isAPressed()) {
+	
+	if (xbox->isAPressed() && shooterControl->isRunning()){
 		if (triggerSolenoid->Get() == false) {
 			triggerSolenoid->Set(true);
 			retractSolenoid->Set(false);

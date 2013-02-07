@@ -8,6 +8,13 @@
 #include "ShooterControl.h"
 #include "XboxController.h"
 
+static ShooterControl *shootercontrol = NULL;
+ShooterControl *ShooterControl::getInstance() {
+	if (shootercontrol == NULL) {
+		shootercontrol = new ShooterControl();
+	}
+	return shootercontrol;
+}
 
 ShooterControl::ShooterControl() {
 	
@@ -90,6 +97,15 @@ void ShooterControl::ShooterAngle(){
 		}else{
 			AngleMotor->Set(0);
 		}
+}
+bool ShooterControl::isRunning(){
+	float speed = shooterMotor1->Get();
+	if (speed ==0)
+		return false;
+	else 
+		return true;
+	
+
 }
 
 //press right trigger to shoot

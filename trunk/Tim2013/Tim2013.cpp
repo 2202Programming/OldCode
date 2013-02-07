@@ -15,11 +15,12 @@ class Tim2013: public SimpleRobot {
 
 	DriverStationLCD *dsLCD;
 	DriveControl driveControl;
-	ShooterControl shooterControl;
+	ShooterControl *shooterControl;
 	PneumaticsControl pneumaticsControl;
 
 public:
 	Tim2013(void) {
+		shooterControl = ShooterControl::getInstance();
 		dsLCD = DriverStationLCD::GetInstance();
 		dsLCD->Clear();
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Tim 2013 V 0.1");
@@ -37,7 +38,7 @@ public:
 		pneumaticsControl.initialize();
 		while (IsOperatorControl()) {
 			driveControl.run();
-			shooterControl.run();
+			shooterControl->run();
 			pneumaticsControl.run();
 			Wait(0.005); // wait for a motor update time
 		}
