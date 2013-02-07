@@ -15,14 +15,14 @@ public:
 
 private:
 	
-	
+	Timer solenoidTimer;
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
 	Compressor *compressor;
 	Solenoid *triggerSolenoid;
 	Solenoid *retractSolenoid;
 	void fire();
-
+	bool firing;
  
 
 };

@@ -95,6 +95,6 @@ void ShooterControl::ShooterAngle(){
 //press right trigger to shoot
 void ShooterControl::run() {
 	ShooterCycleSpeed();
-	ShooterAngle();
+	//ShooterAngle();
 }
 
