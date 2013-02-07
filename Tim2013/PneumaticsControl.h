@@ -12,7 +12,7 @@ public:
 	void initialize();
 	void initializeAutonomous();
 	void run();
-
+	
 private:
 	
 	Timer solenoidTimer;
@@ -23,7 +23,7 @@ private:
 	Solenoid *retractSolenoid;
 	void fire();
 	bool firing;
- 
+	ShooterControl *shooterControl;
 
 };
 #endif 
