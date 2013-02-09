@@ -170,8 +170,13 @@ VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
+VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/XboxController.o : $(PRJ_ROOT_DIR)/XboxController.cpp $(FORCE_FILE_BUILD)
+	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
+
+
 OBJECTS_VisionSample2013_partialImage = VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionControl.o \
-	 VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.o
+	 VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.o \
+	 VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/XboxController.o
 
 VisionSample2013_partialImage/$(MODE_DIR)/VisionSample2013_partialImage.o : $(OBJECTS_VisionSample2013_partialImage)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc -r -nostdlib -Wl,-X  -o "$@" $(OBJECTS_VisionSample2013_partialImage) $(LIBPATH) $(LIBS) $(ADDED_LIBPATH) $(ADDED_LIBS)  && if [ "$(EXPAND_DBG)" = "1" ]; then plink "$@";fi
@@ -185,7 +190,7 @@ VisionSample2013_partialImage/$(MODE_DIR)/VisionSample2013_partialImage_clean :
 
 force : 
 
-DEP_FILES := VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionControl.d VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.d
+DEP_FILES := VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionControl.d VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/VisionSample2013.d VisionSample2013_partialImage/$(MODE_DIR)/Objects/VisionSample2013/XboxController.d
 -include $(DEP_FILES)
 
 
