@@ -23,11 +23,14 @@ public:
 		shooterControl = ShooterControl::getInstance();
 		dsLCD = DriverStationLCD::GetInstance();
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Tim 2013 V 0.1");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Tim 2013 V 0.3");
 		dsLCD->UpdateLCD();
 	}
 
 	void Autonomous(void) {
+		while (IsAutonomous()) {
+			shooterControl->runAutonomous();
+		}
 	}
 
 	void OperatorControl(void) {
@@ -37,7 +40,7 @@ public:
 		driveControl.initialize();
 		pneumaticsControl.initialize();
 		while (IsOperatorControl()) {
-			driveControl.run();
+			driveControl.runArcade();
 			shooterControl->run();
 			pneumaticsControl.run();
 			Wait(0.005); // wait for a motor update time

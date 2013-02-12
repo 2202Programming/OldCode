@@ -13,8 +13,8 @@ PneumaticsControl::PneumaticsControl() {
 	dsLCD = DriverStationLCD::GetInstance();
 	shooterControl = ShooterControl::getInstance();
 	
-	// pressure switch is at Digital input 3,
-	// compressor channel is at relay output 1,
+	// pressure switch is at Digital input 1,
+	// compressor channel is at relay output 4,
 	compressor = new Compressor(1, 4);
 	//solenoid module is 2,
 	//solenoid channel is at port 1 of the module
@@ -37,7 +37,7 @@ void PneumaticsControl::initializeAutonomous() {
  */
 void PneumaticsControl::fire() {
 	
-	if (xbox->isAPressed() && shooterControl->isRunning()){
+	if (xbox->isLeftTriggerHeld() && shooterControl->isRunning()){
 		if (triggerSolenoid->Get() == false) {
 			triggerSolenoid->Set(true);
 			retractSolenoid->Set(false);
