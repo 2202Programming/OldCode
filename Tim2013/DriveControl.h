@@ -12,13 +12,15 @@ public:
 	void initializeAutonomous();
 	void runTank();
 	void runArcade();
+	void runArcadeNoAcceleration();	
 	bool runAuto();
 
 private:
-	float scaledOffset(float originalValue, float minValue);
-	float scaledOffset(float originalValue, float minValue, float maxValue);
-	float scaleValue(float originalValue, float offset);
+	//float scaledOffset(float originalValue, float minValue);
+	//float scaledOffset(float originalValue, float minValue, float maxValue);
+	//float scaleValue(float originalValue, float offset);
 	float accelerateMotor(float stickValue, float MotorValue, float loopTime);
+	float accelerateTurnMotor(float stickValue, float MotorValue, float loopTime);
 	float setControlSpeed(float MotorValue);
 	bool controlOn;
 	RobotDrive myRobot; // robot drive system
@@ -30,7 +32,5 @@ private:
 	float ArcadeMotorSpeed;
 	float ArcadeRotateSpeed;
 	Timer accelTimer;
-
-	
 };
 #endif

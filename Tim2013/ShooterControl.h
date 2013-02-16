@@ -16,6 +16,10 @@ public:
 	void run();
 	bool isRunning();
 	void runAutonomous();
+	void ShooterAngle(float angleDirection);
+	void SetShooterMotors(float speed);
+	float getAngle();
+	
 private:
 	ShooterControl();
 
@@ -23,29 +27,32 @@ private:
 	#define SHOOTERMOTORPORT2 6
 	#define SHOOTERANGLEMOTORPORT 7
 	#define SHOOTERSPEEDSTEP .2
-	#define UPPERLIMITPORT 2
-	#define LOWERLIMITPORT 1
+	#define UPPERLIMITPORT 7
+	#define LOWERLIMITPORT 6
 	#define ANGLEMOTORLIFTSPEED 0.3
 	#define SHOOTERSPEEDINCREMENTRESETPT 0.0
 	#define AUTOSPEED .2
 
 	float Shooter1Speed;
 	float Shooter2Speed;
+	float Angle;
+	
 	Jaguar* shooterMotor1;
 	Jaguar* shooterMotor2;
 
-	Jaguar* AngleMotor;
+	Victor* AngleMotor;
 	Relay* AngleMotorRelay;
-
+	
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
 
 	DigitalInput *lowerLimit;
 	DigitalInput *upperLimit;
+	
+	Accelerometer *accelerometer;
 
 	void ShooterCycleSpeed();
-	void ShooterAngle();
-	void ShooterAngleRelay();
+	bool maxAngleReached();
 };
 
 #endif 

@@ -12,10 +12,10 @@ PneumaticsControl::PneumaticsControl() {
 	xbox = XboxController::getInstance();
 	dsLCD = DriverStationLCD::GetInstance();
 	shooterControl = ShooterControl::getInstance();
-	
-	// pressure switch is at Digital input 1,
+
+	// pressure switch is at Digital input 5,
 	// compressor channel is at relay output 4,
-	compressor = new Compressor(1, 4);
+	compressor = new Compressor(5, 4);
 	//solenoid module is 2,
 	//solenoid channel is at port 1 of the module
 	triggerSolenoid = new Solenoid(1, 1);
@@ -29,35 +29,91 @@ void PneumaticsControl::initialize() {
 	retractSolenoid->Set(true);
 }
 
-void PneumaticsControl::initializeAutonomous() {
-}
+//void PneumaticsControl::initializeAutonomous() {
+//	compressor->Start();
+//	triggerSolenoid->Set(false);
+//	retractSolenoid->Set(true);
+//}
 /*
  * when Trigger is pressed, the solenoid switches so that it moves a disk into the shooter wheels
  * otherwise it is back and allows a disk to be loaded.
  */
 void PneumaticsControl::fire() {
-	
-	if (xbox->isLeftTriggerHeld() && shooterControl->isRunning()){
+	if (xbox->isLeftTriggerHeld() && shooterControl->isRunning()) {
 		if (triggerSolenoid->Get() == false) {
 			triggerSolenoid->Set(true);
 			retractSolenoid->Set(false);
-			dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "firing");
 			solenoidTimer.Reset();
 			solenoidTimer.Start();
 		}
 	}
-	if (solenoidTimer.Get() > 1) {
+	if (solenoidTimer.Get() > .5) {
 		solenoidTimer.Stop();
 		triggerSolenoid->Set(false);
 		retractSolenoid->Set(true);
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "retracting");
 	}
 
-	dsLCD->UpdateLCD();
+}
+
+void PneumaticsControl::autoFire() {
+	if (triggerSolenoid->Get() == false) {
+		triggerSolenoid->Set(true);
+		retractSolenoid->Set(false);
+		solenoidTimer.Reset();
+		solenoidTimer.Start();
+	}
+
+	else if (solenoidTimer.Get() > .5) {
+		solenoidTimer.Stop();
+		triggerSolenoid->Set(false);
+		retractSolenoid->Set(true);
+	}
+}
+
+void PneumaticsControl::springFire() {
+	if (triggerSolenoid->Get() == false) {
+		triggerSolenoid->Set(true);
+		solenoidTimer.Reset();
+		solenoidTimer.Start();
+	}
+
+	if (solenoidTimer.Get() > 1) {
+		solenoidTimer.Stop();
+		triggerSolenoid->Set(false);
+	}
+}
+
+/*
+ void PneumaticsControl::runAutonomous(){
+ autonomousTimer.Start();
+ if(autonomousTimer.Get()<SHOOTERBOOTTIME)
+ {
+ retractSolenoid->Set(true);
+ triggerSolenoid->Set(false);
+ dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "retract");
+ }
+ else
+ {
+ retractSolenoid->Set(false);
+ triggerSolenoid->Set(true);
+ if(autonomousTimer.Get()>SHOOTERRESTPERIOD)
+ {
+ autonomousTimer.Reset();
+ }
+ dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "fire");
+ }
+ // dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "Time %f", autonomousTimer.Get());
+ dsLCD->UpdateLCD();
+ }*/
+
+bool PneumaticsControl::CompressorFull() {
+	if ((compressor->GetPressureSwitchValue()) > 0) {
+		return true;
+	}
+	return false;
 }
 
 void PneumaticsControl::run() {
-
 	fire();
 
 }
