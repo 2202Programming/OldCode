@@ -25,16 +25,18 @@ DriveControl::DriveControl() :
 
 void DriveControl::initialize() {
 	//xbox = XboxController::getInstance();
-	myRobot.SetSafetyEnabled(true);
 	accelTimer.Start();
 
 }
+/*
 void DriveControl::initializeAutonomous() {
 	myRobot.SetSafetyEnabled(false);
 }
+
 //min value = .44
 // max value = 1.0
 // original value if at full throttle = 1.0
+
 float DriveControl::scaledOffset(float originalValue, float minValue,
 		float maxValue) {
 
@@ -54,10 +56,13 @@ float DriveControl::scaledOffset(float originalValue, float minValue,
 		return (maxValue - minValue) * originalValue - minValue;
 	}
 }
-
+*/
+/*
 float DriveControl::scaledOffset(float originalValue, float minValue) {
 	return scaledOffset(originalValue, minValue, 1.0);
 }
+*/
+/*
 float DriveControl::scaleValue(float originalValue, float offset) {
 	if (offset != 1 && originalValue != 0) {
 		if (originalValue > 0) {
@@ -70,6 +75,10 @@ float DriveControl::scaleValue(float originalValue, float offset) {
 	}
 	return 0;
 }
+*/
+
+//----------------------------------------------------------------------
+
 float DriveControl::accelerateMotor(float stickValue, float MotorValue,
 		float loopTimer) {
 	bool isBackPressed = xbox->isBackPressed();
@@ -77,11 +86,11 @@ float DriveControl::accelerateMotor(float stickValue, float MotorValue,
 	if (isBackPressed) {
 		if (controlOn) {
 			controlOn = false;
-			dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "");
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "");
 
 		} else {
 			controlOn = true;
-			dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "MicroCtrl On");
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MicroCtrl On");
 		}
 	}
 	dsLCD->UpdateLCD();
@@ -101,9 +110,11 @@ float DriveControl::accelerateMotor(float stickValue, float MotorValue,
 	}
 	float accelMagnitude;
 	if (decel) {
-		accelMagnitude = loopTimer / 1.0;
+		accelMagnitude = .1;
+		//accelMagnitude = loopTimer / .9;
+
 	} else {
-		accelMagnitude = loopTimer / 1.0;
+		accelMagnitude = loopTimer / .8;
 	}
 	if (accelMagnitude > .25) {
 		accelMagnitude = .25;
@@ -129,7 +140,63 @@ float DriveControl::accelerateMotor(float stickValue, float MotorValue,
 
 }
 //if the back button is pressed, the speed of the motor will be halfed. It is reset if pressed again.
+float DriveControl::accelerateTurnMotor(float stickValue, float MotorValue,
+		float loopTimer) {
+	bool isBackPressed = xbox->isBackPressed();
 
+	if (isBackPressed) {
+		if (controlOn) {
+			controlOn = false;
+
+		} else {
+			controlOn = true;
+		}
+	}
+
+	if (controlOn) {
+		stickValue = stickValue * .5;
+	}
+
+	// check for dead zone
+	if (stickValue < .1 && stickValue > -.1) {
+		stickValue = 0;
+	}
+	// magnitude of acceleration
+	bool decel = false;
+	if (fabs(stickValue) < fabs(MotorValue)) {
+		decel = true;
+	}
+	float accelMagnitude;
+	if (decel) {
+		accelMagnitude = .1;
+		//accelMagnitude = loopTimer / .9;
+
+	} else {
+		accelMagnitude = .1;
+	}
+	if (accelMagnitude > .25) {
+		accelMagnitude = .25;
+	}
+	// check if we need to decelerate
+	if (stickValue < MotorValue) {
+		MotorValue -= accelMagnitude;
+		// checks if Motor decelerated beyond stickValue then set it back to stick value
+		if (MotorValue < stickValue) {
+			MotorValue = stickValue;
+		}
+		// else accelerate
+	} else {
+		MotorValue += accelMagnitude;
+		//checks if Motor accelerated beyond stickValue then set it back to stick value
+		if (MotorValue > stickValue) {
+			MotorValue = stickValue;
+		}
+
+	}
+
+	return MotorValue;
+
+}
 
 void DriveControl::runTank() {
 	accelTimer.Stop();
@@ -176,10 +243,16 @@ void DriveControl::runArcade(){
 	float rotateValue = 0.0;
 	moveValue = xbox->getAxisLeftY();
 	rotateValue= xbox->getAxisLeftX();
+	
 	ArcadeMotorSpeed = accelerateMotor(moveValue, ArcadeMotorSpeed, timerValue);
-	ArcadeRotateSpeed = accelerateMotor(rotateValue, ArcadeRotateSpeed, timerValue);
-	myRobot.ArcadeDrive(-1*ArcadeMotorSpeed, ArcadeRotateSpeed);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "rspeed: %f", ArcadeMotorSpeed);
+	ArcadeRotateSpeed = accelerateTurnMotor(rotateValue, ArcadeRotateSpeed, timerValue);
+	
+	myRobot.ArcadeDrive(moveValue, rotateValue);
+	
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "lspeed: %f",
+			LeftMotorSpeed);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "rspeed: %f",
+			RightMotorSpeed);
 	dsLCD->UpdateLCD();
 	accelTimer.Reset();
 	accelTimer.Start();
@@ -187,7 +260,65 @@ void DriveControl::runArcade(){
 	
 }
 
+// This method does not use acceleration. But it adds friction value to make motor more responsive at lower move values
+void DriveControl::runArcadeNoAcceleration(){
+	float moveValue = 0.0;
+	float rotateValue = 0.0;
+
+	// friction value is added as a constant to motor to make it more responsive to joystick at lower value
+	float frictionValue = 0.0;
+	float rotateFriction = 0.0;
+	float SpeedControl = 1.5;
+	moveValue = xbox->getAxisLeftY();
+	rotateValue= xbox->getAxisLeftX();
+	
+	// if move value is above the dead zone set friction value to .2
+	if (moveValue>.1)
+	{
+		frictionValue = 0.2;
+	}
+		else if (moveValue<-.1)
+	{
+		frictionValue = -.2;
+	}
+	if (rotateValue>.1)
+	{
+		rotateFriction = 0.2;
+	}
+		else if (rotateValue<-.1)
+	{
+		rotateFriction = -.2;
+	}
+
+	bool isBackPressed = xbox->isBackPressed();
+	bool controlOn;
+	
+	if (isBackPressed) 
+	{
+		if (controlOn) {
+			controlOn = false;
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "");
+
+		} else {
+			controlOn = true;
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MicroCtrl On");
+		}
+	}
+
+	if (controlOn)
+		SpeedControl = 2.0;
+	
+	myRobot.ArcadeDrive((moveValue + frictionValue) /1.5, (rotateValue+rotateFriction)/1.5);
+	
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "lspeed: %f",
+			LeftMotorSpeed);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "rspeed: %f",
+			RightMotorSpeed);
+	dsLCD->UpdateLCD();	
+}
+
 bool DriveControl::runAuto() {
+	myRobot.ArcadeDrive(0.0,0.0);
 	return (true);
 }
 

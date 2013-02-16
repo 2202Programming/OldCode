@@ -21,24 +21,24 @@ ShooterControl::ShooterControl() {
 	xbox = XboxController::getInstance();
 	dsLCD = DriverStationLCD::GetInstance();
 
-	AngleMotor = new Jaguar(SHOOTERANGLEMOTORPORT);
-	AngleMotorRelay = new Relay(1,Relay::kBothDirections);
-	
+	AngleMotor = new Victor(SHOOTERANGLEMOTORPORT);
+
 	shooterMotor1 = new Jaguar(SHOOTERMOTORPORT1);
 	shooterMotor2 = new Jaguar(SHOOTERMOTORPORT2);
 	Shooter1Speed = 0.0;
 	Shooter2Speed = 0.0;
-
 	upperLimit = new DigitalInput(UPPERLIMITPORT);
 	lowerLimit = new DigitalInput(LOWERLIMITPORT);
+	
 }
 
 void ShooterControl::initialize() {
-
+	Angle = 0.0;
 }
 
-void ShooterControl::initializeAutonomous() {
-}
+//void ShooterControl::initializeAutonomous() {
+//	Angle = 0.0;
+//}
 
 //this method cycles though the shooter speeds in 4 steps
 void ShooterControl::ShooterCycleSpeed() {
@@ -76,60 +76,37 @@ void ShooterControl::ShooterCycleSpeed() {
 
 }
 // this method sets the angle of the shooter using a motor. elevation is increased when right trigger is pressed, and it is decreased
-//when left trigger is pressed. 
-
-void ShooterControl::ShooterAngle() {
-
-	// Check if left trigger is pressed. if it is then start the lift motor in reverse direction to reduce the elivation of the shooter
-	// lowermimit digital input of 1 indicates that there is a room to lower the elivation and we can continue to reduce the angle
-	// NOTE: isRightTriggerHeld actually returns left trigger value. 
-	bool isXPressed = xbox->isXHeld();
-
-	if (isXPressed && lowerLimit->Get() == 1) {
-		AngleMotor->Set(-ANGLEMOTORLIFTSPEED);
-	} else {
-		AngleMotor->Set(0);
-	}
-
-	// same as above except, following lines increse the elivation
-	bool isYPressed = xbox->isYHeld();
-	if (isYPressed && upperLimit->Get() == 1) {
-		AngleMotor->Set(ANGLEMOTORLIFTSPEED);
-	} else {
-		AngleMotor->Set(0);
-	}
-}
-
-
-void ShooterControl::ShooterAngleRelay() {
-
-	// Check if left trigger is pressed. if it is then start the lift motor in reverse direction to reduce the elivation of the shooter
-	// lowermimit digital input of 1 indicates that there is a room to lower the elivation and we can continue to reduce the angle
-	// NOTE: isRightTriggerHeld actually returns left trigger value. 
-	bool isXPressed = xbox->isXHeld();
-
-	if (isXPressed )//&& lowerLimit->Get() == 1) 
-		{
-		AngleMotorRelay->Set(Relay::kReverse);
-		
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "X Pressed");
-		dsLCD->UpdateLCD();
-	} else {
-		AngleMotorRelay->Set(Relay::kOff);
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "         ");
-		dsLCD->UpdateLCD();
-	}
-
-	// same as above except, following lines increse the elivation
-	bool isYPressed = xbox->isYHeld();
-	if (isYPressed )//&& upperLimit->Get() == 1) 
-	{
-		AngleMotorRelay->Set(Relay::kForward);
-	} else {
-		AngleMotorRelay->Set(Relay::kOff);
+void ShooterControl::ShooterAngle(float angleDirection) {
+	//rightAngle = xbox->getAxisRightY();
+	bool upperOn = !upperLimit->Get();
+	bool lowerOn = lowerLimit->Get();
+	
+	// if we are hitting the limit, cancel the direction so that we don't move the motor
+	if (lowerOn) {
+		if (angleDirection < 0) {
+			angleDirection = 0;
+		}
 	}
 	
+	if (upperOn) {
+		if (angleDirection > 0)
+			angleDirection = 0;
+	}
+	
+	// check for dead zone i.e +- 1. move motor if beyond dead zone
+	if (fabs(angleDirection) > .1) {
+		AngleMotor->Set(-1 * angleDirection);
+		Angle += angleDirection;
+	} else {
+		AngleMotor->Set(0.0);
+	}
+	
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "U: %i L: %i",
+				upperOn, lowerOn);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "Angle: %f", Angle);
+		dsLCD->UpdateLCD();
 }
+
 bool ShooterControl::isRunning() {
 	float speed = shooterMotor1->Get();
 	if (speed == 0)
@@ -139,15 +116,32 @@ bool ShooterControl::isRunning() {
 
 }
 
+
+void ShooterControl::SetShooterMotors(float speed){
+	shooterMotor1->Set(speed);
+	shooterMotor2->Set(speed);	
+}
+
+float ShooterControl::getAngle()
+{
+	// use this for now
+	return maxAngleReached();
+}
+
+bool ShooterControl::maxAngleReached()
+{
+	return !upperLimit->Get();
+}
+
 //press right trigger to shoot
 void ShooterControl::run() {
 	ShooterCycleSpeed();
-	//ShooterAngle();
-	ShooterAngleRelay();
-}
-void ShooterControl::runAutonomous() {
-	shooterMotor1->Set(Shooter1Speed);
-	shooterMotor2->Set(Shooter2Speed);
+	ShooterAngle(xbox->getAxisRightY());
 
 }
+//void ShooterControl::runAutonomous() {
+//shooterMotor1->Set(AUTOSPEED);
+//shooterMotor2->Set(AUTOSPEED);
+//
+//}
 

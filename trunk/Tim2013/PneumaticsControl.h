@@ -4,24 +4,31 @@
 #include "WPILib.h"
 #include "XboxController.h"
 
+#define SHOOTERBOOTTIME 2.0
+#define SHOOTERRESTPERIOD 3.0
+
 class PneumaticsControl {
 public:
 	~PneumaticsControl() {
 	}
 	PneumaticsControl();
 	void initialize();
-	void initializeAutonomous();
+	//void initializeAutonomous();
 	void run();
-	
+//	void runAutonomous();
+	bool CompressorFull();
+	void fire();
+	void springFire();
+	void autoFire();
 private:
 	
 	Timer solenoidTimer;
+	//Timer autonomousTimer;
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
 	Compressor *compressor;
 	Solenoid *triggerSolenoid;
 	Solenoid *retractSolenoid;
-	void fire();
 	bool firing;
 	ShooterControl *shooterControl;
 
