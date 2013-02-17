@@ -29,6 +29,7 @@ ShooterControl::ShooterControl() {
 	Shooter2Speed = 0.0;
 	upperLimit = new DigitalInput(UPPERLIMITPORT);
 	lowerLimit = new DigitalInput(LOWERLIMITPORT);
+	shooterStartSpeed = .4;
 	
 }
 
@@ -49,6 +50,9 @@ void ShooterControl::ShooterCycleSpeed() {
 	if (isLBumperPressed) {
 		Shooter1Speed = (Shooter1Speed -= SHOOTERSPEEDSTEP) < 0 ? 0
 				: Shooter1Speed;
+		// if shooter speed is less than shooterstart speed. stop
+		if (Shooter1Speed < shooterStartSpeed)
+			Shooter1Speed = 0;
 
 		// Both variables are set to the same speed, but we are using two variables incase we want to set two different values.
 		// From final code extra variable can be removed
@@ -59,8 +63,14 @@ void ShooterControl::ShooterCycleSpeed() {
 	bool isRBumperPressed = xbox->isRBumperPressed();
 
 	if (isRBumperPressed) {
+		
+		
 		Shooter1Speed = (Shooter1Speed += SHOOTERSPEEDSTEP) > 1.0 ? 1
 				: Shooter1Speed;
+
+		// if shooter speed is equal to first speed increment (.25) jump to shooter start speed (.4).
+		if (Shooter1Speed == SHOOTERSPEEDSTEP)
+			Shooter1Speed = shooterStartSpeed;
 
 		// Both variables are set to the same speed, but we are using two variables incase we want to set two different values.
 		// From final code extra variable can be removed
@@ -79,7 +89,7 @@ void ShooterControl::ShooterCycleSpeed() {
 void ShooterControl::ShooterAngle(float angleDirection) {
 	//rightAngle = xbox->getAxisRightY();
 	bool upperOn = !upperLimit->Get();
-	bool lowerOn = lowerLimit->Get();
+	bool lowerOn = !lowerLimit->Get();
 	
 	// if we are hitting the limit, cancel the direction so that we don't move the motor
 	if (lowerOn) {

@@ -22,7 +22,7 @@ private:
 	float accelerateMotor(float stickValue, float MotorValue, float loopTime);
 	float accelerateTurnMotor(float stickValue, float MotorValue, float loopTime);
 	float setControlSpeed(float MotorValue);
-	bool controlOn;
+	bool precisionDrive;
 	RobotDrive myRobot; // robot drive system
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
