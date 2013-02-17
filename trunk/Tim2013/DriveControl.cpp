@@ -18,7 +18,7 @@ DriveControl::DriveControl() :
 	MinPower = DEFAULT_MIN_POWER;
 	RightMotorSpeed = 0;
 	LeftMotorSpeed = 0;
-	controlOn = false;
+	precisionDrive = false;
 	ArcadeMotorSpeed = 0;
 	ArcadeRotateSpeed = 0;
 }
@@ -84,18 +84,18 @@ float DriveControl::accelerateMotor(float stickValue, float MotorValue,
 	bool isBackPressed = xbox->isBackPressed();
 
 	if (isBackPressed) {
-		if (controlOn) {
-			controlOn = false;
+		if (precisionDrive) {
+			precisionDrive = false;
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "");
 
 		} else {
-			controlOn = true;
+			precisionDrive = true;
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MicroCtrl On");
 		}
 	}
 	dsLCD->UpdateLCD();
 
-	if (controlOn) {
+	if (precisionDrive) {
 		stickValue = stickValue * .5;
 	}
 
@@ -145,15 +145,15 @@ float DriveControl::accelerateTurnMotor(float stickValue, float MotorValue,
 	bool isBackPressed = xbox->isBackPressed();
 
 	if (isBackPressed) {
-		if (controlOn) {
-			controlOn = false;
+		if (precisionDrive) {
+			precisionDrive = false;
 
 		} else {
-			controlOn = true;
+			precisionDrive = true;
 		}
 	}
 
-	if (controlOn) {
+	if (precisionDrive) {
 		stickValue = stickValue * .5;
 	}
 
@@ -291,24 +291,25 @@ void DriveControl::runArcadeNoAcceleration(){
 	}
 
 	bool isBackPressed = xbox->isBackPressed();
-	bool controlOn;
+	
 	
 	if (isBackPressed) 
 	{
-		if (controlOn) {
-			controlOn = false;
+		if (precisionDrive) {
+			precisionDrive = false;
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "");
 
 		} else {
-			controlOn = true;
+			precisionDrive = true;
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MicroCtrl On");
 		}
 	}
 
-	if (controlOn)
-		SpeedControl = 2.0;
+	if (precisionDrive)
+		SpeedControl = 2.5;
 	
-	myRobot.ArcadeDrive((moveValue + frictionValue) /1.5, (rotateValue+rotateFriction)/1.5);
+	myRobot.ArcadeDrive((moveValue + frictionValue) /SpeedControl, (rotateValue+rotateFriction)/SpeedControl);
+	
 	
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "lspeed: %f",
 			LeftMotorSpeed);

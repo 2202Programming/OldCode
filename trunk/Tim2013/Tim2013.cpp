@@ -17,16 +17,19 @@ class Tim2013: public SimpleRobot {
 	ShooterControl *shooterControl;
 	PneumaticsControl pneumaticsControl;
 	LiftControl *liftControl;
-
+	Relay *ledRelay;
 public:
 	Tim2013(void) {
 		shooterControl = ShooterControl::getInstance();
 		dsLCD = DriverStationLCD::GetInstance();
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Tim 2013 V 0.4.5");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Tim 2013 V 0.4.6");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(false);
 		liftControl = LiftControl::getInstance();
+		
+		ledRelay = new Relay(8, Relay::kForwardOnly);
+		ledRelay->Set(Relay::kOn);
 	}
 
 	void Autonomous(void) {
@@ -59,8 +62,8 @@ public:
 		Timer fireRate;
 		float waitTime = 3.0; // time before ready to shoot
 		fireRate.Start();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Operator control");
-				dsLCD->UpdateLCD();
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
+					dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(true);
 		
 		while (IsAutonomous()&&IsEnabled()) {
@@ -68,9 +71,9 @@ public:
 			//	Start the Angle to go until it is at the top
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "while loop");
 					dsLCD->UpdateLCD();
-			shooterControl->ShooterAngle(1);
+			//shooterControl->ShooterAngle(1);
 			//	run motors from ShooterControl
-			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "angke set");
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "angle set");
 					dsLCD->UpdateLCD();
 			shooterControl->SetShooterMotors(.4);
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "set motors");
