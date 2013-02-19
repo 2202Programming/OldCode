@@ -68,23 +68,33 @@ public:
 		
 		while (IsAutonomous()&&IsEnabled()) {
 			GetWatchdog().Feed();
+			
 			//	Start the Angle to go until it is at the top
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "while loop");
 					dsLCD->UpdateLCD();
-			//shooterControl->ShooterAngle(1);
+			
+			shooterControl->ShooterAngle(1);
+			
 			//	run motors from ShooterControl
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "angle set");
 					dsLCD->UpdateLCD();
-			shooterControl->SetShooterMotors(.4);
+			
+			shooterControl->SetShooterMotors(1.0);
+
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "set motors");
 					dsLCD->UpdateLCD();
 			//	check if angle has reached desired
-			if (shooterControl->getAngle() == 1.0) {dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "if angle");
-			dsLCD->UpdateLCD();
+			if (shooterControl->getAngle() == 1.0) {
+				dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "if angle");
+				dsLCD->UpdateLCD();
+				
 				if (fireRate.Get() > waitTime) {
-					waitTime = 1.5; // change wait time to fire rate
+					waitTime = 3.0; // change wait time to fire rate
+					
 					pneumaticsControl.autoFire();
+					
 					fireRate.Reset();
+					
 					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "fire");
 							dsLCD->UpdateLCD();
 				}
