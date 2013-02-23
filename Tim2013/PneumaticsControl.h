@@ -8,6 +8,7 @@
 #define SHOOTERRESTPERIOD 3.0
 
 class PneumaticsControl {
+
 public:
 	~PneumaticsControl() {
 	}
@@ -18,6 +19,7 @@ public:
 //	void runAutonomous();
 	bool CompressorFull();
 	void fire();
+	void chambering();
 	void springFire();
 	void autoFire();
 private:
@@ -30,7 +32,9 @@ private:
 	Solenoid *triggerSolenoid;
 	Solenoid *retractSolenoid;
 	bool firing;
+	bool chambered;
 	ShooterControl *shooterControl;
+	
 
 };
 #endif 
