@@ -25,7 +25,7 @@ public:
 	void Autonomous(void)
 	{
 		myRobot.SetSafetyEnabled(false);
-		myRobot.Drive(0.5, 0.0); 	// drive forwards half speed
+		myRobot.Drive(-0.5, 0.0); 	// drive forwards half speed
 		Wait(2.0); 				//    for 2 seconds
 		myRobot.Drive(0.0, 0.0); 	// stop robot
 	}
@@ -41,6 +41,13 @@ public:
 			myRobot.ArcadeDrive(stick); // drive with arcade style (use right stick)
 			Wait(0.005);				// wait for a motor update time
 		}
+	}
+	
+	/**
+	 * Runs during test mode
+	 */
+	void Test() {
+
 	}
 };
 

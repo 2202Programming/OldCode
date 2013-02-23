@@ -56,14 +56,14 @@ XboxController::XboxController(int stick) :
 }
 bool XboxController::isLeftTriggerHeld() {
 	bool isPressed = false;
-	if (this->getAxisTrigger() <= -.8) {
+	if (this->getAxisTrigger() >= .8) {
 		isPressed = true;
 	}
 	return isButtonHeld(leftTrigger, isPressed, JOG_DEBOUNCE);
 }
 bool XboxController::isRightTriggerHeld() {
 	bool isPressed = false;
-	if (this->getAxisTrigger() >= .8) {
+	if (this->getAxisTrigger() <= -.8) {
 		isPressed = true;
 	}
 	return isButtonHeld(rightTrigger, isPressed, JOG_DEBOUNCE);

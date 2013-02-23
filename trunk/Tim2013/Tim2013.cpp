@@ -1,4 +1,5 @@
 /* Timothy robot,
+
  * Soaring disks throw to the goals.
  * Also, climbs. Maybe.
  */
@@ -12,6 +13,7 @@
 
 class Tim2013: public SimpleRobot {
 
+	DriverStation *driverStation;
 	DriverStationLCD *dsLCD;
 	DriveControl driveControl;
 	ShooterControl *shooterControl;
@@ -20,6 +22,7 @@ class Tim2013: public SimpleRobot {
 	Relay *ledRelay;
 public:
 	Tim2013(void) {
+		driverStation = DriverStation::GetInstance();
 		shooterControl = ShooterControl::getInstance();
 		dsLCD = DriverStationLCD::GetInstance();
 		dsLCD->Clear();
@@ -27,18 +30,33 @@ public:
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(false);
 		liftControl = LiftControl::getInstance();
-		
+
 		ledRelay = new Relay(8, Relay::kForwardOnly);
 		ledRelay->Set(Relay::kOn);
 	}
 
+	void DashBoardInput() {
+		int i = 0;
+		GetWatchdog().SetEnabled(true);
+		while (IsAutonomous() && IsEnabled()) {
+			i++;
+			GetWatchdog().Feed();
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "%f, %i",
+					driverStation->GetAnalogIn(1), i);
+			dsLCD->UpdateLCD();
+			
+		}
+	}
+
 	void Autonomous(void) {
+		//DashBoardInput();
 		SimpleAutonomous();
+
 	}
 
 	void OperatorControl(void) {
 		GetWatchdog().SetEnabled(true);
-
+		dsLCD->Clear();
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Operator control");
 		dsLCD->UpdateLCD();
 
@@ -63,40 +81,40 @@ public:
 		float waitTime = 3.0; // time before ready to shoot
 		fireRate.Start();
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
-					dsLCD->UpdateLCD();
+		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(true);
-		
-		while (IsAutonomous()&&IsEnabled()) {
+
+		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
-			
+
 			//	Start the Angle to go until it is at the top
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "while loop");
-					dsLCD->UpdateLCD();
-			
+			dsLCD->UpdateLCD();
+
 			shooterControl->ShooterAngle(1);
-			
+
 			//	run motors from ShooterControl
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "angle set");
-					dsLCD->UpdateLCD();
-			
+			dsLCD->UpdateLCD();
+
 			shooterControl->SetShooterMotors(1.0);
 
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "set motors");
-					dsLCD->UpdateLCD();
+			dsLCD->UpdateLCD();
 			//	check if angle has reached desired
 			if (shooterControl->getAngle() == 1.0) {
 				dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "if angle");
 				dsLCD->UpdateLCD();
-				
+
 				if (fireRate.Get() > waitTime) {
 					waitTime = 3.0; // change wait time to fire rate
-					
+
 					pneumaticsControl.autoFire();
-					
+
 					fireRate.Reset();
-					
+
 					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "fire");
-							dsLCD->UpdateLCD();
+					dsLCD->UpdateLCD();
 				}
 			}
 		}

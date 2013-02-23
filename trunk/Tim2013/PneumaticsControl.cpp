@@ -21,6 +21,7 @@ PneumaticsControl::PneumaticsControl() {
 	triggerSolenoid = new Solenoid(1, 1);
 	retractSolenoid = new Solenoid(1, 2);
 	firing = false;
+	chambered = false;
 }
 void PneumaticsControl::initialize() {
 	// the solenoid shuts itself off automatically at about 120 psi so we do not have to shut it off for safety reasons.
@@ -39,20 +40,29 @@ void PneumaticsControl::initialize() {
  * otherwise it is back and allows a disk to be loaded.
  */
 void PneumaticsControl::fire() {
-	if (xbox->isLeftTriggerHeld() && shooterControl->isRunning()) {
+	
+
+	if (xbox->isRightTriggerHeld() && shooterControl->isRunning()) {
 		if (triggerSolenoid->Get() == false) {
 			triggerSolenoid->Set(true);
 			retractSolenoid->Set(false);
-			solenoidTimer.Reset();
 			solenoidTimer.Start();
 		}
 	}
 	if (solenoidTimer.Get() > .5) {
 		solenoidTimer.Stop();
+		solenoidTimer.Reset();
 		triggerSolenoid->Set(false);
 		retractSolenoid->Set(true);
 	}
 
+}
+void PneumaticsControl:: chambering(){
+	if (xbox->isLeftTriggerHeld()) {
+		if(retractSolenoid->Get()){
+		triggerSolenoid->Set(false);
+		retractSolenoid->Set(false);
+	}}
 }
 
 void PneumaticsControl::autoFire() {
@@ -115,5 +125,10 @@ bool PneumaticsControl::CompressorFull() {
 
 void PneumaticsControl::run() {
 	fire();
+	chambering();
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "T: %i R: %i",
+				 triggerSolenoid->Get(),retractSolenoid->Get());
+	dsLCD->UpdateLCD();
+	
 
 }

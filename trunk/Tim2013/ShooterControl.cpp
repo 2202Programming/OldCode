@@ -118,8 +118,7 @@ void ShooterControl::ShooterAngle(float angleDirection) {
 	
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "U: %i L: %i",
 				upperOn, lowerOn);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "Angle: %f", Angle);
-		dsLCD->UpdateLCD();
+	dsLCD->UpdateLCD();
 }
 
 bool ShooterControl::isRunning() {

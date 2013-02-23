@@ -244,12 +244,12 @@
         </mapAttribute>
     </attributes>
     <buildtargets>
-        <buildtarget buildtool="Linker" name="VisionSample2013" passed="false" targetname="VisionSample2013">
+        <buildtarget buildtool="Linker" name="SimpleTemplate" passed="false" targetname="SimpleTemplate">
             <contents>
-                <buildtargetreference name="/VisionSample2013/VisionSample2013_partialImage"/>
+                <buildtargetreference name="/VisionSample2013/SimpleTemplate_partialImage"/>
             </contents>
         </buildtarget>
-        <buildtarget buildtool="Partial Image Linker" name="VisionSample2013_partialImage" passed="true" targetname="VisionSample2013_partialImage">
+        <buildtarget buildtool="Partial Image Linker" name="SimpleTemplate_partialImage" passed="true" targetname="SimpleTemplate_partialImage">
             <contents>
                 <folder name="/VisionSample2013" recursive="true"/>
             </contents>
