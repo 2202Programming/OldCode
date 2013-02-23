@@ -7,7 +7,7 @@
 #include "WPILib.h"
 #include <cmath>
 #include "XboxController.h"
-
+#include "ShooterControl.h"
 
 
 #define TOPCHANNEL 3
@@ -33,7 +33,8 @@ private:
 
 	Solenoid *solenoidTop;
 	Solenoid *solenoidBot;
-
+	
+	ShooterControl *shooterControl;
 	bool isGoingUp;
 };
 

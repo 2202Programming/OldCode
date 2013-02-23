@@ -19,6 +19,7 @@ public:
 	void ShooterAngle(float angleDirection);
 	void SetShooterMotors(float speed);
 	float getAngle();
+	bool isLowestAngle();
 	
 private:
 	ShooterControl();
