@@ -22,6 +22,7 @@ LiftControl::LiftControl() {
 	dsLCD = DriverStationLCD::GetInstance();
 	solenoidTop = new Solenoid(SOLENOIDMODULE, TOPCHANNEL);
 	solenoidBot = new Solenoid(SOLENOIDMODULE, BOTCHANNEL);
+	shooterControl = ShooterControl::getInstance();
 }
 
 void LiftControl::initialize() {
@@ -40,13 +41,13 @@ void LiftControl::initializeAutonomous() {
  */
 void LiftControl::run() {
 	bool isBPressed = xbox->isBPressed();
-	if (isBPressed) {
-		solenoidTop->Set(!isGoingUp);
-		solenoidBot->Set(isGoingUp);
-		isGoingUp = !isGoingUp;
-	} else {
+	if (shooterControl->isLowestAngle()) {
+		if (isBPressed) {
+			solenoidTop->Set(!isGoingUp);
+			solenoidBot->Set(isGoingUp);
+			isGoingUp = !isGoingUp;
+		}
 	}
-
 }
 void LiftControl::runAutonomous() {
 }

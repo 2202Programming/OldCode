@@ -85,6 +85,11 @@ void ShooterControl::ShooterCycleSpeed() {
 	shooterMotor2->Set(Shooter2Speed);
 
 }
+
+bool ShooterControl::isLowestAngle()
+{
+	return !lowerLimit->Get();
+}
 // this method sets the angle of the shooter using a motor. elevation is increased when right trigger is pressed, and it is decreased
 void ShooterControl::ShooterAngle(float angleDirection) {
 	//rightAngle = xbox->getAxisRightY();
