@@ -26,7 +26,7 @@ public:
 		shooterControl = ShooterControl::getInstance();
 		dsLCD = DriverStationLCD::GetInstance();
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Tim 2013 V 0.4.6");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Tim 2013 V 1.0");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(false);
 		liftControl = LiftControl::getInstance();
@@ -44,13 +44,14 @@ public:
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "%f, %i",
 					driverStation->GetAnalogIn(1), i);
 			dsLCD->UpdateLCD();
-			
+
 		}
 	}
 
 	void Autonomous(void) {
 		//DashBoardInput();
-		SimpleAutonomous();
+		AnalogAutonomous();
+		//SimpleAutonomous();
 
 	}
 
@@ -98,6 +99,57 @@ public:
 			dsLCD->UpdateLCD();
 
 			shooterControl->SetShooterMotors(1.0);
+
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "set motors");
+			dsLCD->UpdateLCD();
+			//	check if angle has reached desired
+			if (shooterControl->getAngle() == 1.0) {
+				dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "if angle");
+				dsLCD->UpdateLCD();
+
+				if (fireRate.Get() > waitTime) {
+					waitTime = 3.0; // change wait time to fire rate
+
+					pneumaticsControl.autoFire();
+
+					fireRate.Reset();
+
+					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "fire");
+					dsLCD->UpdateLCD();
+				}
+			}
+		}
+	}
+
+	// autonomous firing at speed set by analog input 1
+	void AnalogAutonomous() {
+		//		Start the Compressor
+		pneumaticsControl.initialize();
+		Timer fireRate;
+		float waitTime = 3.0; // time before ready to shoot
+		fireRate.Start();
+		float fireSpeed = driverStation->GetAnalogIn(1);
+		if (fireSpeed > 1.0) {
+			fireSpeed = 1.0;
+		}
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
+		dsLCD->UpdateLCD();
+		GetWatchdog().SetEnabled(true);
+
+		while (IsAutonomous() && IsEnabled()) {
+			GetWatchdog().Feed();
+
+			//	Start the Angle to go until it is at the top
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "while loop");
+			dsLCD->UpdateLCD();
+
+			shooterControl->ShooterAngle(1);
+
+			//	run motors from ShooterControl
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "angle set");
+			dsLCD->UpdateLCD();
+
+			shooterControl->SetShooterMotors(fireSpeed);
 
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "set motors");
 			dsLCD->UpdateLCD();
