@@ -26,7 +26,7 @@ public:
 		shooterControl = ShooterControl::getInstance();
 		dsLCD = DriverStationLCD::GetInstance();
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Tim 2013 V 1.0");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Tim 2013 V 1.2");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(false);
 		liftControl = LiftControl::getInstance();
@@ -60,14 +60,13 @@ public:
 		dsLCD->Clear();
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Operator control");
 		dsLCD->UpdateLCD();
-
+		shooterControl->initialize();
 		driveControl.initialize();
 		pneumaticsControl.initialize();
 		liftControl->initialize();
 		while (IsOperatorControl() && IsEnabled()) {
 			GetWatchdog().Feed();
-
-			driveControl.runArcade();
+			driveControl.runArcadeNoAcceleration();
 			shooterControl->run();
 			pneumaticsControl.run();
 			liftControl->run();
