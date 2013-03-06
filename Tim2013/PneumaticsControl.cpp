@@ -28,6 +28,7 @@ void PneumaticsControl::initialize() {
 	compressor->Start();
 	triggerSolenoid->Set(false);
 	retractSolenoid->Set(true);
+	
 }
 
 //void PneumaticsControl::initializeAutonomous() {
@@ -40,7 +41,6 @@ void PneumaticsControl::initialize() {
  * otherwise it is back and allows a disk to be loaded.
  */
 void PneumaticsControl::fire() {
-	
 
 	if (xbox->isRightTriggerHeld() && shooterControl->isRunning()) {
 		if (triggerSolenoid->Get() == false) {
@@ -57,12 +57,20 @@ void PneumaticsControl::fire() {
 	}
 
 }
-void PneumaticsControl:: chambering(){
+void PneumaticsControl::chambering() {
 	if (xbox->isLeftTriggerHeld()) {
-		if(retractSolenoid->Get()){
+		if (retractSolenoid->Get()) {
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "chambering");
+			dsLCD->UpdateLCD();
+			triggerSolenoid->Set(true);
+			retractSolenoid->Set(true);
+		}
+	}
+	else{
+		dsLCD->UpdateLCD();
 		triggerSolenoid->Set(false);
 		retractSolenoid->Set(false);
-	}}
+	}
 }
 
 void PneumaticsControl::autoFire() {
@@ -125,10 +133,9 @@ bool PneumaticsControl::CompressorFull() {
 
 void PneumaticsControl::run() {
 	fire();
-	chambering();
+	//chambering();
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "T: %i R: %i",
-				 triggerSolenoid->Get(),retractSolenoid->Get());
+			triggerSolenoid->Get(), retractSolenoid->Get());
 	dsLCD->UpdateLCD();
-	
 
 }

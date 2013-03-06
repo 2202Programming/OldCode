@@ -27,12 +27,13 @@ private:
 	#define SHOOTERMOTORPORT1 5
 	#define SHOOTERMOTORPORT2 6
 	#define SHOOTERANGLEMOTORPORT 7
-	#define SHOOTERSPEEDSTEP .25
+	#define SHOOTERSPEEDSTEP .2
 	#define UPPERLIMITPORT 7
 	#define LOWERLIMITPORT 6
 	#define ANGLEMOTORLIFTSPEED 0.3
 	#define SHOOTERSPEEDINCREMENTRESETPT 0.0
 	#define AUTOSPEED .2
+	
 
 	float Shooter1Speed;
 	float Shooter2Speed;
@@ -54,7 +55,10 @@ private:
 	Accelerometer *accelerometer;
 
 	void ShooterCycleSpeed();
+	void ShooterSeperateCycleSpeed();
 	bool maxAngleReached();
+	void Stop();
+	void APushStop();
 };
 
 #endif 

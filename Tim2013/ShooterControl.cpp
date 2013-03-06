@@ -35,6 +35,7 @@ ShooterControl::ShooterControl() {
 
 void ShooterControl::initialize() {
 	Angle = 0.0;
+Stop();
 }
 
 //void ShooterControl::initializeAutonomous() {
@@ -42,6 +43,47 @@ void ShooterControl::initialize() {
 //}
 
 //this method cycles though the shooter speeds in 4 steps
+void ShooterControl::ShooterSeperateCycleSpeed(){
+	bool isLBumperPressed = xbox->isLBumperPressed();
+	if (isLBumperPressed) {
+		Shooter1Speed += SHOOTERSPEEDSTEP;
+			if (Shooter1Speed > 1)
+				Shooter1Speed = 0;
+
+
+			
+		}
+	bool isRBumperPressed = xbox->isRBumperPressed();
+
+		if (isRBumperPressed) {
+			
+			
+			Shooter2Speed += SHOOTERSPEEDSTEP;
+			if (Shooter2Speed > 1)
+				Shooter2Speed = 0;
+		}
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "shooter1speed: %f",
+				Shooter1Speed);
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "shooter2speed: %f",
+				Shooter2Speed);
+		dsLCD->UpdateLCD();
+
+		shooterMotor1->Set(Shooter1Speed);
+		shooterMotor2->Set(Shooter2Speed);
+
+}
+void ShooterControl::Stop(){
+	Shooter1Speed = 0;
+	Shooter2Speed = 0;
+	shooterMotor1->Set(Shooter1Speed);
+	shooterMotor2->Set(Shooter2Speed);
+}
+void ShooterControl::APushStop(){
+	bool isAPressed = xbox->isAPressed();
+	if (isAPressed){
+		Stop();
+	}
+}
 void ShooterControl::ShooterCycleSpeed() {
 
 	bool isLBumperPressed = xbox->isLBumperPressed();
@@ -149,7 +191,9 @@ bool ShooterControl::maxAngleReached()
 
 //press right trigger to shoot
 void ShooterControl::run() {
-	ShooterCycleSpeed();
+	APushStop();
+	ShooterSeperateCycleSpeed();
+	//ShooterCycleSpeed();
 	ShooterAngle(xbox->getAxisRightY());
 
 }

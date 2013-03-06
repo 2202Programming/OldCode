@@ -29,53 +29,53 @@ void DriveControl::initialize() {
 
 }
 /*
-void DriveControl::initializeAutonomous() {
-	myRobot.SetSafetyEnabled(false);
-}
+ void DriveControl::initializeAutonomous() {
+ myRobot.SetSafetyEnabled(false);
+ }
 
-//min value = .44
-// max value = 1.0
-// original value if at full throttle = 1.0
+ //min value = .44
+ // max value = 1.0
+ // original value if at full throttle = 1.0
 
-float DriveControl::scaledOffset(float originalValue, float minValue,
-		float maxValue) {
+ float DriveControl::scaledOffset(float originalValue, float minValue,
+ float maxValue) {
 
-	if (fabs(originalValue) <= 0.1)
-		return 0.0;
+ if (fabs(originalValue) <= 0.1)
+ return 0.0;
 
-	if (minValue > maxValue)
-		minValue = maxValue;
+ if (minValue > maxValue)
+ minValue = maxValue;
 
-	if (fabs(originalValue) > 1.0) {
-		originalValue = (originalValue > 0) ? 1.0 : -1.0;
-	}
+ if (fabs(originalValue) > 1.0) {
+ originalValue = (originalValue > 0) ? 1.0 : -1.0;
+ }
 
-	if (originalValue > 0.0) {
-		return (maxValue - minValue) * originalValue + minValue;// (1 - .44)*1 + .44 = 1
-	} else {
-		return (maxValue - minValue) * originalValue - minValue;
-	}
-}
-*/
+ if (originalValue > 0.0) {
+ return (maxValue - minValue) * originalValue + minValue;// (1 - .44)*1 + .44 = 1
+ } else {
+ return (maxValue - minValue) * originalValue - minValue;
+ }
+ }
+ */
 /*
-float DriveControl::scaledOffset(float originalValue, float minValue) {
-	return scaledOffset(originalValue, minValue, 1.0);
-}
-*/
+ float DriveControl::scaledOffset(float originalValue, float minValue) {
+ return scaledOffset(originalValue, minValue, 1.0);
+ }
+ */
 /*
-float DriveControl::scaleValue(float originalValue, float offset) {
-	if (offset != 1 && originalValue != 0) {
-		if (originalValue > 0) {
-			return (1.0 / (1.0 - offset)) * originalValue - (offset / (1.0
-					- offset));
-		} else {
-			return (1.0 / (1.0 - offset)) * originalValue + (offset / (1.0
-					- offset));
-		}
-	}
-	return 0;
-}
-*/
+ float DriveControl::scaleValue(float originalValue, float offset) {
+ if (offset != 1 && originalValue != 0) {
+ if (originalValue > 0) {
+ return (1.0 / (1.0 - offset)) * originalValue - (offset / (1.0
+ - offset));
+ } else {
+ return (1.0 / (1.0 - offset)) * originalValue + (offset / (1.0
+ - offset));
+ }
+ }
+ return 0;
+ }
+ */
 
 //----------------------------------------------------------------------
 
@@ -215,14 +215,12 @@ void DriveControl::runTank() {
 	LeftMotorSpeed = accelerateMotor(lefty, LeftMotorSpeed, timerValue);
 	RightMotorSpeed = accelerateMotor(righty, RightMotorSpeed, timerValue);
 	myRobot.TankDrive(-1 * LeftMotorSpeed, -1 * RightMotorSpeed);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "lspeed: %f",
-			LeftMotorSpeed);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "rspeed: %f",
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "speed: %f",
 			RightMotorSpeed);
 	dsLCD->UpdateLCD();
 	accelTimer.Reset();
 	accelTimer.Start();
-	
+
 	//lefty = xbox->getAxisLeftY(); // this is for arcade
 	//righty = xbox->getAxisLeftX();
 	//myRobot.ArcadeDrive(-scaledOffset(lefty, MinPower),
@@ -236,32 +234,27 @@ void DriveControl::runTank() {
 	//	dsLCD->UpdateLCD();
 }
 
-void DriveControl::runArcade(){
+void DriveControl::runArcade() {
 	accelTimer.Stop();
 	float timerValue = accelTimer.Get();
 	float moveValue = 0.0;
 	float rotateValue = 0.0;
+
 	moveValue = xbox->getAxisLeftY();
-	rotateValue= xbox->getAxisLeftX();
-	
+	rotateValue = xbox->getAxisLeftX();
 	ArcadeMotorSpeed = accelerateMotor(moveValue, ArcadeMotorSpeed, timerValue);
-	ArcadeRotateSpeed = accelerateTurnMotor(rotateValue, ArcadeRotateSpeed, timerValue);
-	
-	myRobot.ArcadeDrive(moveValue, rotateValue);
-	
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "lspeed: %f",
-			LeftMotorSpeed);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "rspeed: %f",
-			RightMotorSpeed);
-	dsLCD->UpdateLCD();
+	ArcadeRotateSpeed = accelerateTurnMotor(rotateValue, ArcadeRotateSpeed,
+			timerValue);
+
+	myRobot.ArcadeDrive(-1 * ArcadeMotorSpeed, ArcadeRotateSpeed);
+
 	accelTimer.Reset();
 	accelTimer.Start();
 
-	
 }
 
 // This method does not use acceleration. But it adds friction value to make motor more responsive at lower move values
-void DriveControl::runArcadeNoAcceleration(){
+void DriveControl::runArcadeNoAcceleration() {
 	float moveValue = 0.0;
 	float rotateValue = 0.0;
 
@@ -270,31 +263,23 @@ void DriveControl::runArcadeNoAcceleration(){
 	float rotateFriction = 0.0;
 	float SpeedControl = 1.5;
 	moveValue = xbox->getAxisLeftY();
-	rotateValue= xbox->getAxisLeftX();
-	
+	rotateValue = xbox->getAxisLeftX();
+
 	// if move value is above the dead zone set friction value to .2
-	if (moveValue>.1)
-	{
+	if (moveValue > .1) {
 		frictionValue = 0.2;
-	}
-		else if (moveValue<-.1)
-	{
+	} else if (moveValue < -.1) {
 		frictionValue = -.2;
 	}
-	if (rotateValue>.1)
-	{
+	if (rotateValue > .1) {
 		rotateFriction = 0.2;
-	}
-		else if (rotateValue<-.1)
-	{
+	} else if (rotateValue < -.1) {
 		rotateFriction = -.2;
 	}
 
+	// if back button is pressed, set the precision drive mode
 	bool isBackPressed = xbox->isBackPressed();
-	
-	
-	if (isBackPressed) 
-	{
+	if (isBackPressed) {
 		if (precisionDrive) {
 			precisionDrive = false;
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "");
@@ -304,22 +289,19 @@ void DriveControl::runArcadeNoAcceleration(){
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MicroCtrl On");
 		}
 	}
-
 	if (precisionDrive)
 		SpeedControl = 2.5;
-	
-	myRobot.ArcadeDrive((moveValue + frictionValue) /SpeedControl, (rotateValue+rotateFriction)/SpeedControl);
-	
-	
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "lspeed: %f",
-			LeftMotorSpeed);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "rspeed: %f",
-			RightMotorSpeed);
-	dsLCD->UpdateLCD();	
+
+	myRobot.ArcadeDrive(-1 * ((moveValue + frictionValue) / SpeedControl),
+			(rotateValue + rotateFriction) / SpeedControl);
+
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "speed: %f", moveValue);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "rotate: %f", rotateValue);
+	dsLCD->UpdateLCD();
 }
 
 bool DriveControl::runAuto() {
-	myRobot.ArcadeDrive(0.0,0.0);
+	myRobot.ArcadeDrive(0.0, 0.0);
 	return (true);
 }
 
