@@ -178,6 +178,10 @@ Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/ShooterControl.o : $(PRJ_ROOT_D
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
+Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/StringPot.o : $(PRJ_ROOT_DIR)/StringPot.cpp $(FORCE_FILE_BUILD)
+	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
+
+
 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/Tim2013.o : $(PRJ_ROOT_DIR)/Tim2013.cpp $(FORCE_FILE_BUILD)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
@@ -194,6 +198,7 @@ OBJECTS_Tim2013_partialImage = Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/
 	 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/LiftControl.o \
 	 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/PneumaticsControl.o \
 	 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/ShooterControl.o \
+	 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/StringPot.o \
 	 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/Tim2013.o \
 	 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/VisionSample2013.o \
 	 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/XboxController.o
@@ -211,8 +216,8 @@ Tim2013_partialImage/$(MODE_DIR)/Tim2013_partialImage_clean :
 force : 
 
 DEP_FILES := Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/DriveControl.d Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/LiftControl.d Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/PneumaticsControl.d \
-	 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/ShooterControl.d Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/Tim2013.d Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/VisionSample2013.d \
-	 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/XboxController.d
+	 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/ShooterControl.d Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/StringPot.d Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/Tim2013.d \
+	 Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/VisionSample2013.d Tim2013_partialImage/$(MODE_DIR)/Objects/Tim2013/XboxController.d
 -include $(DEP_FILES)
 
 

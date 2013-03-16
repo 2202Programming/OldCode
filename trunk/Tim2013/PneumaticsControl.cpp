@@ -28,7 +28,7 @@ void PneumaticsControl::initialize() {
 	compressor->Start();
 	triggerSolenoid->Set(false);
 	retractSolenoid->Set(true);
-	
+
 }
 
 //void PneumaticsControl::initializeAutonomous() {
@@ -65,24 +65,27 @@ void PneumaticsControl::chambering() {
 			triggerSolenoid->Set(true);
 			retractSolenoid->Set(true);
 		}
-	}
-	else{
+	} else {
 		dsLCD->UpdateLCD();
 		triggerSolenoid->Set(false);
 		retractSolenoid->Set(false);
 	}
 }
 
-void PneumaticsControl::autoFire() {
-	if (triggerSolenoid->Get() == false) {
+void PneumaticsControl::autoFire(bool fireNow) {
+	if (triggerSolenoid->Get() == false && fireNow) {
 		triggerSolenoid->Set(true);
 		retractSolenoid->Set(false);
-		solenoidTimer.Reset();
-		solenoidTimer.Start();
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "fire");
+		dsLCD->UpdateLCD();
+		autoTimer.Start();
 	}
 
-	else if (solenoidTimer.Get() > .5) {
-		solenoidTimer.Stop();
+	if (autoTimer.Get() > .5) {
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "retract");
+		dsLCD->UpdateLCD();
+		autoTimer.Stop();
+		autoTimer.Reset();
 		triggerSolenoid->Set(false);
 		retractSolenoid->Set(true);
 	}
@@ -134,8 +137,8 @@ bool PneumaticsControl::CompressorFull() {
 void PneumaticsControl::run() {
 	fire();
 	//chambering();
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "T: %i R: %i",
-			triggerSolenoid->Get(), retractSolenoid->Get());
-	dsLCD->UpdateLCD();
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "T: %i R: %i",
+//			triggerSolenoid->Get(), retractSolenoid->Get());
+//	dsLCD->UpdateLCD();
 
 }

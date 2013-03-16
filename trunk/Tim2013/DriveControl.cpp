@@ -9,7 +9,7 @@
 #define BACKLEFTMOTOR 4
 #define FRONTRIGHTMOTOR 1
 #define BACKRIGHTMOTOR 2
-
+#define AUTOBACKSPEED .8
 DriveControl::DriveControl() :
 	myRobot(FRONTLEFTMOTOR, BACKLEFTMOTOR, FRONTRIGHTMOTOR, BACKRIGHTMOTOR) {
 	xbox = XboxController::getInstance();
@@ -295,13 +295,13 @@ void DriveControl::runArcadeNoAcceleration() {
 	myRobot.ArcadeDrive(-1 * ((moveValue + frictionValue) / SpeedControl),
 			(rotateValue + rotateFriction) / SpeedControl);
 
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "speed: %f", moveValue);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "rotate: %f", rotateValue);
+	//dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "speed: %f", moveValue);
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "rotate: %f", rotateValue);
 	dsLCD->UpdateLCD();
 }
 
 bool DriveControl::runAuto() {
-	myRobot.ArcadeDrive(0.0, 0.0);
+	myRobot.ArcadeDrive(AUTOBACKSPEED, AUTOBACKSPEED);
 	return (true);
 }
 

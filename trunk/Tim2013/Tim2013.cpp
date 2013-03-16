@@ -9,7 +9,10 @@
 #include "DriveControl.h"
 #include "ShooterControl.h"
 #include "PneumaticsControl.h"
-#include "LiftControl.h"
+#include "StringPot.h"
+
+#define AUTODRIVETIME .5
+//#include "LiftControl.h"
 
 class Tim2013: public SimpleRobot {
 
@@ -18,18 +21,20 @@ class Tim2013: public SimpleRobot {
 	DriveControl driveControl;
 	ShooterControl *shooterControl;
 	PneumaticsControl pneumaticsControl;
-	LiftControl *liftControl;
+	//LiftControl *liftControl;
 	Relay *ledRelay;
+	StringPot *stringPot;
 public:
 	Tim2013(void) {
 		driverStation = DriverStation::GetInstance();
 		shooterControl = ShooterControl::getInstance();
+		stringPot = StringPot::getInstance();
 		dsLCD = DriverStationLCD::GetInstance();
 		dsLCD->Clear();
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Tim 2013 V 1.2");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(false);
-		liftControl = LiftControl::getInstance();
+		//liftControl = LiftControl::getInstance();
 
 		ledRelay = new Relay(8, Relay::kForwardOnly);
 		ledRelay->Set(Relay::kOn);
@@ -63,27 +68,41 @@ public:
 		shooterControl->initialize();
 		driveControl.initialize();
 		pneumaticsControl.initialize();
-		liftControl->initialize();
+		//liftControl->initialize();
 		while (IsOperatorControl() && IsEnabled()) {
 			GetWatchdog().Feed();
 			driveControl.runArcadeNoAcceleration();
 			shooterControl->run();
 			pneumaticsControl.run();
-			liftControl->run();
+			stringPot->run();
+			//	liftControl->run();
 			Wait(0.005); // wait for a motor update time
 		}
 	}
 
 	void SimpleAutonomous() {
 		//		Start the Compressor
+
 		pneumaticsControl.initialize();
 		Timer fireRate;
 		float waitTime = 3.0; // time before ready to shoot
-		fireRate.Start();
+
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(true);
-
+/*		if (!driverStation->GetDigitalIn(2)) {
+			Timer driveTime;
+			driveTime.Start();
+			while (IsAutonomous() && IsEnabled() && driveTime.Get()
+					< AUTODRIVETIME) {
+				GetWatchdog().Feed();
+				driveControl.runAuto();
+			}
+			driveTime.Stop();
+		}
+*/
+		bool fireNow = false;
+		fireRate.Start();
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
 
@@ -102,31 +121,30 @@ public:
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "set motors");
 			dsLCD->UpdateLCD();
 			//	check if angle has reached desired
+			fireNow = false;
 			if (shooterControl->getAngle() == 1.0) {
-				dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "if angle");
+				dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "if angle");
 				dsLCD->UpdateLCD();
 
 				if (fireRate.Get() > waitTime) {
-					waitTime = 3.0; // change wait time to fire rate
-
-					pneumaticsControl.autoFire();
-
+					waitTime = .5; // change wait time to fire rate
+					fireNow = true;
 					fireRate.Reset();
 
-					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "fire");
-					dsLCD->UpdateLCD();
 				}
 			}
+			pneumaticsControl.autoFire(fireNow);
 		}
 	}
 
 	// autonomous firing at speed set by analog input 1
 	void AnalogAutonomous() {
 		//		Start the Compressor
+		
 		pneumaticsControl.initialize();
 		Timer fireRate;
 		float waitTime = 3.0; // time before ready to shoot
-		fireRate.Start();
+
 		float fireSpeed = driverStation->GetAnalogIn(1);
 		if (fireSpeed > 1.0) {
 			fireSpeed = 1.0;
@@ -134,7 +152,18 @@ public:
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(true);
-
+/*		if (!driverStation->GetDigitalIn(2)) {
+			Timer driveTime;
+			driveTime.Start();
+			while (IsAutonomous() && IsEnabled() && driveTime.Get()
+					< AUTODRIVETIME) {
+				GetWatchdog().Feed();
+				driveControl.runAuto();
+			}
+			driveTime.Stop();
+		}*/
+		bool fireNow = false;
+		fireRate.Start();
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
 
@@ -155,18 +184,15 @@ public:
 			//	check if angle has reached desired
 			if (shooterControl->getAngle() == 1.0) {
 				dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "if angle");
-				dsLCD->UpdateLCD();
-
+				fireNow = false;
 				if (fireRate.Get() > waitTime) {
 					waitTime = 3.0; // change wait time to fire rate
-
-					pneumaticsControl.autoFire();
-
+					fireNow = true;
 					fireRate.Reset();
-
 					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "fire");
 					dsLCD->UpdateLCD();
 				}
+				pneumaticsControl.autoFire(fireNow);
 			}
 		}
 	}

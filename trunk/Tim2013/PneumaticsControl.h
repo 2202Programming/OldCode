@@ -21,9 +21,10 @@ public:
 	void fire();
 	void chambering();
 	void springFire();
-	void autoFire();
+	void autoFire(bool fireNow);
 private:
 	
+	Timer autoTimer;
 	Timer solenoidTimer;
 	//Timer autonomousTimer;
 	XboxController *xbox;
