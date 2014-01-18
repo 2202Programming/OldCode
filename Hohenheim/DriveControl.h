@@ -32,6 +32,7 @@ private:
 	Encoder *leftEncoder;
 	Encoder *rightEncoder;
 	float MinPower;
+	float maxValue;
 	float RightMotorSpeed;
 	float LeftMotorSpeed;
 	float ArcadeMotorSpeed;
