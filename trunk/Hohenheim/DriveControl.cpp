@@ -2,6 +2,7 @@
 #include "XboxController.h"
 #include "Math.h"
 #include "PneumaticsControl.h"
+#include "WPILib.h"
 
 #define DEFAULT_MIN_POWER .44
 
@@ -14,23 +15,24 @@
 #define SHIFTLOWSPEED .5
 #define SHIFTHIGHSPEED .85
 #define REVOLUTIONS .05026
-#define SHIFTUPSPEED 20.0
-#define SHIFTDOWNSPEED 15.0
+#define FSHIFTUPSPEED 65.0
+#define FSHIFTDOWNSPEED 60.0
+#define BSHIFTDOWNSPEED 60.0
+#define BSHIFTUPSPEED 65.0
 DriveControl::DriveControl() :
 	myRobot(FRONTLEFTMOTOR, BACKLEFTMOTOR, FRONTRIGHTMOTOR, BACKRIGHTMOTOR) {
 	xbox = XboxController::getInstance();
-	rightEncoder = new Encoder(12,11,true);
-	leftEncoder = new Encoder(14,13,false);
+	rightEncoder = new Encoder(12, 11, true, Encoder::k2X);
+	leftEncoder = new Encoder(14, 13, false, Encoder::k2X);
 	myRobot.SetExpiration(0.1);
 	dsLCD = DriverStationLCD::GetInstance();
 	pneumaticsControl = PneumaticsControl::getInstance();
 	MinPower = DEFAULT_MIN_POWER;
 	RightMotorSpeed = 0;
-	LeftMotorSpeed = 0;
 	Timer waitTime;
-	precisionDrive = false;
-	ArcadeMotorSpeed = 0;
+	LeftMotorSpeed = 0;
 	ArcadeRotateSpeed = 0;
+	maxValue = 0;
 }
 
 void DriveControl::initialize() {
@@ -83,7 +85,7 @@ void DriveControl::runArcadeNoAcceleration() {
 	if (precisionDrive)
 		SpeedControl = 2.5;
 
-	myRobot.ArcadeDrive(0.8 * ((moveValue + frictionValue) / SpeedControl),
+	myRobot.ArcadeDrive(((moveValue + frictionValue) / SpeedControl),
 			(rotateValue + rotateFriction) / SpeedControl);
 
 	// manual shift, toggle
@@ -96,43 +98,67 @@ void DriveControl::runArcadeNoAcceleration() {
 	 }
 	 }
 	 */
-	//auto shifting
-
-	/*
-	 if (waitTime.Get() <= 0.000001) {
-		if (moveValue >= SHIFTHIGHSPEED) {
-			waitTime.Start();
-		}
-		if(moveValue <= SHIFTLOWSPEED){
-			waitTime.Start();
-					
-		}
-	}else{
-		if(waitTime.Get() >= 1.0){
-			if(pneumaticsControl->isHighGear()){
-				pneumaticsControl->shiftDown();
-			}else{
-				pneumaticsControl->shiftUp();
-			}
-			waitTime.Stop();
-			waitTime.Reset();
-					
-		}
-	}*/
-	double leftspeed = leftEncoder->GetRate();
-	double rightspeed = rightEncoder->GetRate();
-	double averagespeed = (leftspeed + rightspeed) / 2.0;
-	if(averagespeed > SHIFTUPSPEED){
-		pneumaticsControl->shiftUp();
-
-	}else if(averagespeed < SHIFTDOWNSPEED){
+	
+	bool leftDirection = leftEncoder->GetDirection();
+	bool rightDirection = rightEncoder->GetDirection();
+	double leftSpeed = leftEncoder->GetRate();
+	double rightSpeed = rightEncoder->GetRate();
+	double averageSpeed = (leftSpeed + rightSpeed) / 2.0;
+	bool lbPressed = xbox->isLBumperHeld();
+	bool rbPressed = xbox->isRBumperHeld();
+	
+	
+	
+	//manual override
+	if (lbPressed) { //shift down if lb is held
 		pneumaticsControl->shiftDown();
-
+	} else if (rbPressed) { //shift up if rb is held
+		pneumaticsControl->shiftUp();
 	}
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "L: %i LD: %f", leftEncoder->Get(), leftEncoder->GetDistance());
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "R: %i RD: %f", rightEncoder->Get(),rightEncoder->GetDistance());
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "LS: %f in/s", leftEncoder->GetRate());
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "RS: %f in/s", rightEncoder->GetRate());
+	
+	
+	
+	//Auto shifting
+	 else {
+		if (leftDirection != rightDirection) { //low gear if turning
+			pneumaticsControl->shiftDown();
+		}
+		else if (leftDirection == true && rightDirection == true) { //forward
+			if (averageSpeed > FSHIFTUPSPEED) {
+				pneumaticsControl->shiftUp();
+			} else if (averageSpeed < FSHIFTDOWNSPEED) {
+				pneumaticsControl->shiftDown();
+			}
+		} else { //backward
+			if (abs(averageSpeed) > BSHIFTUPSPEED){
+				pneumaticsControl->shiftUp();
+			} else if (abs(averageSpeed) < BSHIFTDOWNSPEED) {
+				pneumaticsControl->shiftDown();
+			}
+		}
+	} 
+	
+	
+	
+	bool reset = xbox->isBPressed();
+	if(reset){
+		maxValue = 0;
+	}
+	if(maxValue < averageSpeed){
+		maxValue = averageSpeed;
+	}
+	
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "L: %i LD: %f",
+			leftEncoder->Get(), leftEncoder->GetDistance());
+	
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "R: %i RD: %f",
+			rightEncoder->Get(), rightEncoder->GetDistance());
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "LS: %f in/s",
+			leftEncoder->GetRate());
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "RS: %f in/s",
+//			rightEncoder->GetRate());
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MaxValue: %f ",
+				maxValue);
 
 	dsLCD->UpdateLCD();
 
