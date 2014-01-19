@@ -21,6 +21,10 @@ public:
 	void shiftUp();
 	void shiftDown();
 	bool isHighGear();
+	bool isPistonOn();
+	void piston();
+	void pistonOn();
+	void pistonOff();
 	
 private:
 	PneumaticsControl();
@@ -32,9 +36,12 @@ private:
 	Solenoid *rightTrigger;
 	//Solenoid *leftTrigger;
 	Solenoid *rightRetract;
+	Solenoid *rightPiston;
+	Solenoid *leftPiston;
 	//Solenoid *leftRetract;
 	bool shiftState;
 	bool highGear;
+	bool pistonState;
 
 };
 #endif 

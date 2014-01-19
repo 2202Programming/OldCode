@@ -11,6 +11,8 @@
 #define BACKLEFTMOTOR 4
 #define FRONTRIGHTMOTOR 1
 #define BACKRIGHTMOTOR 2
+#define BALLMOTOR 5
+#define SHOOTERMOTOR 5
 #define AUTOBACKSPEED .8
 #define SHIFTLOWSPEED .5
 #define SHIFTHIGHSPEED .85
@@ -19,8 +21,10 @@
 #define FSHIFTDOWNSPEED 60.0
 #define BSHIFTDOWNSPEED 60.0
 #define BSHIFTUPSPEED 65.0
+
+
 DriveControl::DriveControl() :
-	myRobot(FRONTLEFTMOTOR, BACKLEFTMOTOR, FRONTRIGHTMOTOR, BACKRIGHTMOTOR) {
+	myRobot(FRONTLEFTMOTOR, BACKLEFTMOTOR, FRONTRIGHTMOTOR, BACKRIGHTMOTOR){
 	xbox = XboxController::getInstance();
 	rightEncoder = new Encoder(12, 11, true, Encoder::k2X);
 	leftEncoder = new Encoder(14, 13, false, Encoder::k2X);
@@ -28,11 +32,14 @@ DriveControl::DriveControl() :
 	dsLCD = DriverStationLCD::GetInstance();
 	pneumaticsControl = PneumaticsControl::getInstance();
 	MinPower = DEFAULT_MIN_POWER;
+	BallGrabber = new Victor(BALLMOTOR);
 	RightMotorSpeed = 0;
 	Timer waitTime;
+	counter = 0;
 	LeftMotorSpeed = 0;
 	ArcadeRotateSpeed = 0;
 	maxValue = 0;
+	
 }
 
 void DriveControl::initialize() {
@@ -50,6 +57,7 @@ void DriveControl::runArcadeNoAcceleration() {
 
 	float moveValue = 0.0;
 	float rotateValue = 0.0;
+	float rightMoveValue = 0.0;
 
 	// friction value is added as a constant to motor to make it more responsive to joystick at lower value
 	float frictionValue = 0.0;
@@ -57,6 +65,11 @@ void DriveControl::runArcadeNoAcceleration() {
 	float SpeedControl = 1.5;
 	moveValue = xbox->getAxisLeftY();
 	rotateValue = xbox->getAxisLeftX();
+	rightMoveValue = xbox->getAxisRightY();
+	
+	BallGrabber->Set((rightMoveValue) / SpeedControl);
+	
+	
 
 	// if move value is above the dead zone set friction value to .2
 	if (moveValue > .1) {
@@ -85,8 +98,9 @@ void DriveControl::runArcadeNoAcceleration() {
 	if (precisionDrive)
 		SpeedControl = 2.5;
 
+	
 	myRobot.ArcadeDrive(((moveValue + frictionValue) / SpeedControl),
-			(rotateValue + rotateFriction) / SpeedControl);
+			(-1.0 * (rotateValue + rotateFriction)) / SpeedControl);
 
 	// manual shift, toggle
 	/*	bool isRBumper = xbox->isRBumperPressed();
@@ -99,6 +113,20 @@ void DriveControl::runArcadeNoAcceleration() {
 	 }
 	 */
 	
+	bool aPress = xbox->isAPressed();
+	bool pistonState = pneumaticsControl->isPistonOn();
+	//bool bPress = xbox->isBPressed();
+	if(aPress){
+		if(pistonState){
+		pneumaticsControl->pistonOn();
+		}
+		else if(!pistonState)
+		{
+		pneumaticsControl->pistonOff();
+		}
+	}
+	
+	
 	bool leftDirection = leftEncoder->GetDirection();
 	bool rightDirection = rightEncoder->GetDirection();
 	double leftSpeed = leftEncoder->GetRate();
@@ -108,7 +136,8 @@ void DriveControl::runArcadeNoAcceleration() {
 	bool rbPressed = xbox->isRBumperHeld();
 	
 	
-	
+	bool isHighGear = pneumaticsControl->isHighGear();
+
 	//manual override
 	if (lbPressed) { //shift down if lb is held
 		pneumaticsControl->shiftDown();
@@ -117,23 +146,24 @@ void DriveControl::runArcadeNoAcceleration() {
 	}
 	
 	
-	
 	//Auto shifting
 	 else {
 		if (leftDirection != rightDirection) { //low gear if turning
 			pneumaticsControl->shiftDown();
 		}
 		else if (leftDirection == true && rightDirection == true) { //forward
-			if (averageSpeed > FSHIFTUPSPEED) {
+			if (averageSpeed > FSHIFTUPSPEED && !isHighGear) {
 				pneumaticsControl->shiftUp();
-			} else if (averageSpeed < FSHIFTDOWNSPEED) {
+			} else if (averageSpeed < FSHIFTDOWNSPEED && isHighGear) {
 				pneumaticsControl->shiftDown();
+				counter++;
 			}
 		} else { //backward
 			if (abs(averageSpeed) > BSHIFTUPSPEED){
 				pneumaticsControl->shiftUp();
 			} else if (abs(averageSpeed) < BSHIFTDOWNSPEED) {
 				pneumaticsControl->shiftDown();
+				//Wait(0.05);
 			}
 		}
 	} 

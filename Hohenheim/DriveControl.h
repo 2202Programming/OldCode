@@ -25,10 +25,11 @@ private:
 	float setControlSpeed(float MotorValue);
 	bool precisionDrive;
 	bool shiftDrive;
-	Timer waitTime;
-	RobotDrive myRobot; // robot drive system
+	Timer waitTime; 
+	RobotDrive myRobot; // robot drive system	
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
+	Victor* BallGrabber;
 	Encoder *leftEncoder;
 	Encoder *rightEncoder;
 	float MinPower;
@@ -37,6 +38,7 @@ private:
 	float LeftMotorSpeed;
 	float ArcadeMotorSpeed;
 	float ArcadeRotateSpeed;
+	float counter;
 	Timer accelTimer;
 	
 };
