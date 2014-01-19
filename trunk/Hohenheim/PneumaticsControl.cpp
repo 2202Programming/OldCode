@@ -27,8 +27,11 @@ PneumaticsControl::PneumaticsControl() {
 	rightRetract = new Solenoid(1, 2);
 	//leftTrigger = new Solenoid(1, 1);
 	//leftRetract = new Solenoid(1, 2);
+	rightPiston = new Solenoid(1, 5);
+	leftPiston = new Solenoid(1, 6);
 	shiftState = false;
 	highGear = false;
+	pistonState = false;
 
 }
 void PneumaticsControl::initialize() {
@@ -36,10 +39,48 @@ void PneumaticsControl::initialize() {
 	compressor->Start();
 	rightTrigger->Set(false);
 	rightRetract->Set(true);
+	rightPiston->Set(false);
+	leftPiston->Set(false);
 	//leftTrigger->Set(false);
 	//leftRetract->Set(true);
 
 }
+
+
+
+bool PneumaticsControl::isPistonOn() {
+	return pistonState;
+}
+
+void PneumaticsControl::pistonOn() {
+	pistonState = true;
+	rightPiston->Set(true);
+	leftPiston->Set(true);
+}
+
+void PneumaticsControl::pistonOff() {
+	pistonState = false;
+	rightPiston->Set(false);
+	leftPiston->Set(false);
+
+}
+
+void PneumaticsControl::piston() {
+	bool isAPress = xbox->isAPressed();
+	if (isAPress) {
+		if (pistonState) {
+			pistonState = false;
+			rightPiston->Set(false);
+			leftPiston->Set(false);
+		} else {
+			pistonState = true;
+			rightPiston->Set(true);
+			leftPiston->Set(true);
+		}
+
+	}
+}
+
 
 bool PneumaticsControl::isHighGear() {
 	return highGear;
@@ -100,5 +141,6 @@ bool PneumaticsControl::CompressorFull() {
 
 void PneumaticsControl::run() {
 	shift();
-     
+	piston();
+
 }
