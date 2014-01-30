@@ -23,27 +23,34 @@ PneumaticsControl::PneumaticsControl() {
 	xbox = XboxController::getInstance();
 	dsLCD = DriverStationLCD::GetInstance();
 	compressor = new Compressor(5, 4);
-	rightTrigger = new Solenoid(1, 1);
-	rightRetract = new Solenoid(1, 2);
-	//leftTrigger = new Solenoid(1, 1);
-	//leftRetract = new Solenoid(1, 2);
-	rightPiston = new Solenoid(1, 5);
-	leftPiston = new Solenoid(1, 6);
+	rightTrigger = new Solenoid(1,1);
+	rightRetract = new Solenoid(1,2);
+	leftTrigger = new Solenoid(1,8);
+	leftRetract = new Solenoid(1,7);
+	pistonR = new Solenoid(1,5);
+	retractPistonR = new Solenoid(1,6);
+	pistonL = new Solenoid(1,3);
+	retractPistonL = new Solenoid(1,4);
+	
 	shiftState = false;
-	highGear = false;
-	pistonState = false;
-
+	highGear = false; //true if gear is in high
+	pistonState = false; //true if piston is extended
+	
 }
 void PneumaticsControl::initialize() {
 	// the solenoid shuts itself off automatically at about 120 psi so we do not have to shut it off for safety reasons.
 	compressor->Start();
 	rightTrigger->Set(false);
 	rightRetract->Set(true);
-	rightPiston->Set(false);
-	leftPiston->Set(false);
+	leftTrigger->Set(false);
+	leftRetract->Set(true);
+	pistonR->Set(false);
+	pistonL->Set(false);
+	retractPistonR->Set(true);
+	retractPistonL->Set(true);
+	
 	//leftTrigger->Set(false);
 	//leftRetract->Set(true);
-
 }
 
 
@@ -54,32 +61,31 @@ bool PneumaticsControl::isPistonOn() {
 
 void PneumaticsControl::pistonOn() {
 	pistonState = true;
-	rightPiston->Set(true);
-	leftPiston->Set(true);
+	pistonR->Set(true);
+	pistonL->Set(true);
+	retractPistonR->Set(false);
+	retractPistonL->Set(false);
 }
 
 void PneumaticsControl::pistonOff() {
 	pistonState = false;
-	rightPiston->Set(false);
-	leftPiston->Set(false);
-
+	pistonR->Set(false);
+	pistonL->Set(false);
+	retractPistonR->Set(true);
+	retractPistonL->Set(true);
 }
 
 void PneumaticsControl::piston() {
 	bool isAPress = xbox->isAPressed();
 	if (isAPress) {
 		if (pistonState) {
-			pistonState = false;
-			rightPiston->Set(false);
-			leftPiston->Set(false);
+			pistonOff();
 		} else {
-			pistonState = true;
-			rightPiston->Set(true);
-			leftPiston->Set(true);
+			pistonOn();
 		}
-
 	}
 }
+
 
 
 bool PneumaticsControl::isHighGear() {
@@ -92,18 +98,18 @@ void PneumaticsControl::shift() {
 		if (highGear) {
 			highGear = false;
 			rightTrigger->Set(true);
-			//leftTrigger->Set(false);
+			leftTrigger->Set(true);
 			rightRetract->Set(false);
-			//leftRetract-> Set(true);
+			leftRetract-> Set(false);
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "Low Gear");
 			dsLCD->UpdateLCD();
 
 		} else {
 			highGear = true;
 			rightTrigger->Set(false);
-			//leftTrigger->Set(true);
+			leftTrigger->Set(false);
 			rightRetract->Set(true);
-			//leftRetract-> Set(false);
+			leftRetract-> Set(true);
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "High Gear");
 			dsLCD->UpdateLCD();
 		}
@@ -115,9 +121,9 @@ void PneumaticsControl::shift() {
 void PneumaticsControl::shiftUp() {
 	highGear = true;
 	rightTrigger->Set(true);
-	//leftTrigger->Set(true);
+	leftTrigger->Set(true);
 	rightRetract->Set(false);
-	//leftRetract-> Set(false);
+	leftRetract-> Set(false);
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "High Gear");
 	dsLCD->UpdateLCD();
 }
@@ -125,9 +131,9 @@ void PneumaticsControl::shiftUp() {
 void PneumaticsControl::shiftDown() {
 	highGear = false;
 	rightTrigger->Set(false);
-	//leftTrigger->Set(false);
+	leftTrigger->Set(false);
 	rightRetract->Set(true);
-	//leftRetract-> Set(true);
+	leftRetract-> Set(true);
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "Low Gear");
 	dsLCD->UpdateLCD();
 }

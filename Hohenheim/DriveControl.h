@@ -11,9 +11,10 @@ public:
 	DriveControl();
 	void initialize();
 	void initializeAutonomous();
-	void runArcadeNoAcceleration();	
+	void runArcadeAutoShift();	
 	void runShift();
 	bool runAuto();
+
 
 private:
 	PneumaticsControl *pneumaticsControl;
@@ -29,7 +30,6 @@ private:
 	RobotDrive myRobot; // robot drive system	
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
-	Victor* BallGrabber;
 	Encoder *leftEncoder;
 	Encoder *rightEncoder;
 	float MinPower;
@@ -39,7 +39,15 @@ private:
 	float ArcadeMotorSpeed;
 	float ArcadeRotateSpeed;
 	float counter;
+	DigitalInput *lowerLimit;
+	DigitalInput *upperLimit;
 	Timer accelTimer;
+	
+	//Code for Manaul Shooting Set Speed
+	Jaguar* UpperShooter;
+	Jaguar* LowerShooter;
+	 
+	 
 	
 };
 #endif

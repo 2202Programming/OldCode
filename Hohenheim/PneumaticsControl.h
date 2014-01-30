@@ -33,12 +33,19 @@ private:
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
 	Compressor *compressor;
+	
+	//For shifting
 	Solenoid *rightTrigger;
-	//Solenoid *leftTrigger;
+	Solenoid *leftTrigger;
 	Solenoid *rightRetract;
-	Solenoid *rightPiston;
-	Solenoid *leftPiston;
-	//Solenoid *leftRetract;
+	Solenoid *leftRetract;
+	
+	//For ball pick up
+	Solenoid *pistonR;
+	Solenoid *pistonL;
+	Solenoid *retractPistonR;
+	Solenoid *retractPistonL;
+	
 	bool shiftState;
 	bool highGear;
 	bool pistonState;

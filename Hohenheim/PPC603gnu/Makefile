@@ -170,11 +170,15 @@ DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/Hohenheim.o : $(
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
+DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/PIDControlSubClass.o : $(PRJ_ROOT_DIR)/PIDControlSubClass.cpp $(FORCE_FILE_BUILD)
+	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
+
+
 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/PneumaticsControl.o : $(PRJ_ROOT_DIR)/PneumaticsControl.cpp $(FORCE_FILE_BUILD)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
-DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/StringPot.o : $(PRJ_ROOT_DIR)/StringPot.cpp $(FORCE_FILE_BUILD)
+DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/ShooterControl.o : $(PRJ_ROOT_DIR)/ShooterControl.cpp $(FORCE_FILE_BUILD)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
@@ -184,8 +188,9 @@ DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/XboxController.o
 
 OBJECTS_DriverStationLCDText_partialImage = DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/DriveControl.o \
 	 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/Hohenheim.o \
+	 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/PIDControlSubClass.o \
 	 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/PneumaticsControl.o \
-	 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/StringPot.o \
+	 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/ShooterControl.o \
 	 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/XboxController.o
 
 DriverStationLCDText_partialImage/$(MODE_DIR)/DriverStationLCDText_partialImage.o : $(OBJECTS_DriverStationLCDText_partialImage)
@@ -200,8 +205,8 @@ DriverStationLCDText_partialImage/$(MODE_DIR)/DriverStationLCDText_partialImage_
 
 force : 
 
-DEP_FILES := DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/DriveControl.d DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/Hohenheim.d DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/PneumaticsControl.d \
-	 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/StringPot.d DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/XboxController.d
+DEP_FILES := DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/DriveControl.d DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/Hohenheim.d DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/PIDControlSubClass.d \
+	 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/PneumaticsControl.d DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/ShooterControl.d DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/Hohenheim/XboxController.d
 -include $(DEP_FILES)
 
 
