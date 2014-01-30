@@ -8,7 +8,7 @@
 #include "XboxController.h"
 #include "DriveControl.h"
 #include "PneumaticsControl.h"
-//#include "StringPot.h"
+#include "ShooterControl.h"
 
 
 #define AUTODRIVETIME .5
@@ -19,7 +19,7 @@ class Hohenheim: public SimpleRobot {
 	DriverStationLCD *dsLCD;
 	DriveControl driveControl;
 	PneumaticsControl *pneumaticsControl;	
-	//StringPot *stringPot;
+	ShooterControl *shooterControl;
 
 	
 public:
@@ -27,7 +27,7 @@ public:
 		driverStation = DriverStation::GetInstance();
 		dsLCD = DriverStationLCD::GetInstance();
 		pneumaticsControl = PneumaticsControl::getInstance();
-		//stringPot = StringPot::getInstance();
+		shooterControl = ShooterControl::getInstance();
 		dsLCD->Clear();
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 2.0 shift test");
 		dsLCD->UpdateLCD();
@@ -60,11 +60,12 @@ public:
 		dsLCD->UpdateLCD();
 		driveControl.initialize();
 		pneumaticsControl->initialize();
+		shooterControl->initialize();
 		while (IsOperatorControl() && IsEnabled()) {
 			GetWatchdog().Feed();
-			driveControl.runArcadeNoAcceleration();
+			driveControl.runArcadeAutoShift();
 			pneumaticsControl->run();
-			//stringPot->run();
+			shooterControl->run();
 			Wait(0.005); // wait for a motor update time
 		}
 	}
