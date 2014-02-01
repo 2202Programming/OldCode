@@ -10,7 +10,7 @@ public:
 	PIDControlSubClass(UINT32 channel1, UINT32 channel2);
 	void PIDWrite (float output);
 private:
-Jaguar motor1;
-Jaguar motor2;
+Talon motor1;
+Talon motor2;
 };
 #endif

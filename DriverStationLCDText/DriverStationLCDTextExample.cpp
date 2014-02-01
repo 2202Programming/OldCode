@@ -24,9 +24,9 @@ public:
 
 	}
 	void initialize() {
-		Kp = 0.0010;
-		Ki = 0.0001;
-		Kd = 0.0;		
+		Kp = 0.003;
+		Ki = 0.0;
+		Kd = 0.00001;		
 		input = new Encoder(10, 9, true, Encoder::k1X);
 		input->Reset();
 		output = new PIDControlSubClass(8,9);
