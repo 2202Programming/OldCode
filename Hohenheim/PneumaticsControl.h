@@ -21,11 +21,11 @@ public:
 	void shiftUp();
 	void shiftDown();
 	bool isHighGear();
-	bool isPistonOn();
+	bool ballGrabberIsExtended();
 	void piston();
-	void pistonOn();
-	void pistonOff();
-	
+	void ballGrabberExtend();
+	void ballGrabberRetract();
+	int getCompressorPressure();
 private:
 	PneumaticsControl();
 	Timer autoTimer;
@@ -33,7 +33,7 @@ private:
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
 	Compressor *compressor;
-	
+	/*
 	//For shifting
 	Solenoid *rightTrigger;
 	Solenoid *leftTrigger;
@@ -41,14 +41,19 @@ private:
 	Solenoid *leftRetract;
 	
 	//For ball pick up
-	Solenoid *pistonR;
-	Solenoid *pistonL;
-	Solenoid *retractPistonR;
-	Solenoid *retractPistonL;
-	
+	Solenoid *extendBallGrabberR;
+	Solenoid *extendBallGrabberL;
+	Solenoid *retractBallGrabberR;
+	Solenoid *retractBallGrabberL;
+	*/
 	bool shiftState;
 	bool highGear;
-	bool pistonState;
+	bool isBallGrabberExtended;
+
+	DoubleSolenoid *shiftControlL;
+	DoubleSolenoid *shiftControlR;
+	DoubleSolenoid *ballGrabberControlL;
+	DoubleSolenoid *ballGrabberControlR;
 
 };
 #endif 

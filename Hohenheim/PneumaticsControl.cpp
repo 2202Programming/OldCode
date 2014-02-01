@@ -23,70 +23,92 @@ PneumaticsControl::PneumaticsControl() {
 	xbox = XboxController::getInstance();
 	dsLCD = DriverStationLCD::GetInstance();
 	compressor = new Compressor(5, 4);
-	rightTrigger = new Solenoid(1,1);
-	rightRetract = new Solenoid(1,2);
-	leftTrigger = new Solenoid(1,8);
-	leftRetract = new Solenoid(1,7);
-	pistonR = new Solenoid(1,5);
-	retractPistonR = new Solenoid(1,6);
-	pistonL = new Solenoid(1,3);
-	retractPistonL = new Solenoid(1,4);
-	
+	shiftControlL = new DoubleSolenoid(8, 7);
+	shiftControlR = new DoubleSolenoid(1, 2);
+	ballGrabberControlR = new DoubleSolenoid(5, 6);
+	ballGrabberControlL = new DoubleSolenoid(3, 4);
+
+	//rightTrigger = new Solenoid(1, 1);
+	//rightRetract = new Solenoid(1, 2);
+	//leftTrigger = new Solenoid(1, 8);
+	//leftRetract = new Solenoid(1, 7);
+	//pistonR = new Solenoid(1, 5);
+	//retractPistonR = new Solenoid(1, 6);
+	//pistonL = new Solenoid(1, 3);
+	//retractPistonL = new Solenoid(1, 4);
+
 	shiftState = false;
 	highGear = false; //true if gear is in high
-	pistonState = false; //true if piston is extended
-	
+	isBallGrabberExtended = false; //true if piston is extended
+
 }
 void PneumaticsControl::initialize() {
 	// the solenoid shuts itself off automatically at about 120 psi so we do not have to shut it off for safety reasons.
 	compressor->Start();
-	rightTrigger->Set(false);
-	rightRetract->Set(true);
-	leftTrigger->Set(false);
-	leftRetract->Set(true);
-	pistonR->Set(false);
-	pistonL->Set(false);
-	retractPistonR->Set(true);
-	retractPistonL->Set(true);
-	
+
+	shiftControlL->Set(DoubleSolenoid::kReverse);
+	shiftControlR->Set(DoubleSolenoid::kReverse);
+	ballGrabberControlR->Set(DoubleSolenoid::kReverse);
+	ballGrabberControlL->Set(DoubleSolenoid::kReverse);
+
+	/*
+	 rightTrigger->Set(false);
+	 rightRetract->Set(true);
+	 leftTrigger->Set(false);
+	 leftRetract->Set(true);
+	 pistonR->Set(false);
+	 pistonL->Set(false);
+	 retractPistonR->Set(true);
+	 retractPistonL->Set(true);
+	 */
+
 	//leftTrigger->Set(false);
 	//leftRetract->Set(true);
 }
 
-
-
-bool PneumaticsControl::isPistonOn() {
-	return pistonState;
+int PneumaticsControl::getCompressorPressure() {
+	return compressor->GetPressureSwitchValue();
 }
 
-void PneumaticsControl::pistonOn() {
-	pistonState = true;
-	pistonR->Set(true);
-	pistonL->Set(true);
-	retractPistonR->Set(false);
-	retractPistonL->Set(false);
+bool PneumaticsControl::ballGrabberIsExtended() {
+	return isBallGrabberExtended;
 }
 
-void PneumaticsControl::pistonOff() {
-	pistonState = false;
-	pistonR->Set(false);
-	pistonL->Set(false);
-	retractPistonR->Set(true);
-	retractPistonL->Set(true);
+void PneumaticsControl::ballGrabberExtend() {
+	isBallGrabberExtended = true;
+	ballGrabberControlR->Set(DoubleSolenoid::kForward);
+	ballGrabberControlL->Set(DoubleSolenoid::kForward);
+
+	/*pistonR->Set(true);
+	 pistonL->Set(true);
+	 retractPistonR->Set(false);
+	 retractPistonL->Set(false);
+	 */
+}
+
+void PneumaticsControl::ballGrabberRetract() {
+	isBallGrabberExtended = false;
+	ballGrabberControlR->Set(DoubleSolenoid::kReverse);
+	ballGrabberControlL->Set(DoubleSolenoid::kReverse);
+
+	/*
+	 pistonR->Set(false);
+	 pistonL->Set(false);
+	 retractPistonR->Set(true);
+	 retractPistonL->Set(true);
+	 */
 }
 
 void PneumaticsControl::piston() {
 	bool isAPress = xbox->isAPressed();
 	if (isAPress) {
-		if (pistonState) {
-			pistonOff();
+		if (isBallGrabberExtended) {
+			ballGrabberRetract();
 		} else {
-			pistonOn();
+			ballGrabberExtend();
 		}
 	}
 }
-
-
 
 bool PneumaticsControl::isHighGear() {
 	return highGear;
@@ -97,19 +119,27 @@ void PneumaticsControl::shift() {
 	if (isRBumper) {
 		if (highGear) {
 			highGear = false;
-			rightTrigger->Set(true);
-			leftTrigger->Set(true);
-			rightRetract->Set(false);
-			leftRetract-> Set(false);
+			shiftControlL->Set(DoubleSolenoid::kForward);
+			shiftControlR->Set(DoubleSolenoid::kForward);
+			/*
+			 rightTrigger->Set(true);
+			 leftTrigger->Set(true);
+			 rightRetract->Set(false);
+			 leftRetract-> Set(false);
+			 */
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "Low Gear");
 			dsLCD->UpdateLCD();
 
 		} else {
 			highGear = true;
-			rightTrigger->Set(false);
-			leftTrigger->Set(false);
-			rightRetract->Set(true);
-			leftRetract-> Set(true);
+			shiftControlL->Set(DoubleSolenoid::kReverse);
+			shiftControlR->Set(DoubleSolenoid::kReverse);
+			/*
+			 rightTrigger->Set(false);
+			 leftTrigger->Set(false);
+			 rightRetract->Set(true);
+			 leftRetract-> Set(true);
+			 */
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "High Gear");
 			dsLCD->UpdateLCD();
 		}
@@ -120,20 +150,26 @@ void PneumaticsControl::shift() {
 
 void PneumaticsControl::shiftUp() {
 	highGear = true;
-	rightTrigger->Set(true);
-	leftTrigger->Set(true);
-	rightRetract->Set(false);
-	leftRetract-> Set(false);
+	shiftControlL->Set(DoubleSolenoid::kForward);
+	shiftControlR->Set(DoubleSolenoid::kForward);
+	/*rightTrigger->Set(true);
+	 leftTrigger->Set(true);
+	 rightRetract->Set(false);
+	 leftRetract-> Set(false);*/
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "High Gear");
 	dsLCD->UpdateLCD();
 }
 
 void PneumaticsControl::shiftDown() {
 	highGear = false;
-	rightTrigger->Set(false);
-	leftTrigger->Set(false);
-	rightRetract->Set(true);
-	leftRetract-> Set(true);
+	shiftControlL->Set(DoubleSolenoid::kReverse);
+	shiftControlR->Set(DoubleSolenoid::kReverse);
+	/*
+	 rightTrigger->Set(false);
+	 leftTrigger->Set(false);
+	 rightRetract->Set(true);
+	 leftRetract-> Set(true);
+	 */
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "Low Gear");
 	dsLCD->UpdateLCD();
 }

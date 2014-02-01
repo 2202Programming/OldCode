@@ -32,8 +32,8 @@ DriveControl::DriveControl() :
 	Timer waitTime;
 	counter = 0;
 	maxValue = 0;
-	UpperShooter = new Jaguar(7);
-	LowerShooter = new Jaguar(8);
+//	UpperShooter = new Jaguar(7);
+//	LowerShooter = new Jaguar(8);
 
 }
 
@@ -81,10 +81,10 @@ void DriveControl::runArcadeAutoShift() {
 	myRobot.ArcadeDrive(((moveValue + frictionValue) / SpeedControl),
 			(-1.0 * (rotateValue + rotateFriction)) / SpeedControl);
 
-	UpperShooter->Set((rightJoystickValue + frictionValue) / SpeedControl);
-	LowerShooter->Set((rightJoystickValue + frictionValue) / SpeedControl);
+//	UpperShooter->Set((rightJoystickValue + frictionValue) / SpeedControl);
+//	LowerShooter->Set((rightJoystickValue + frictionValue) / SpeedControl);
 
-	float shooterMotorValue = UpperShooter->Get();
+	//float shooterMotorValue = UpperShooter->Get();
 	
 
 	bool leftDirection = leftEncoder->GetDirection();
@@ -145,7 +145,7 @@ void DriveControl::runArcadeAutoShift() {
 			leftEncoder->GetRate());
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MaxValue: %f ", maxValue);
 	*/
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "ShooterValue: %f ", shooterMotorValue);
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "ShooterValue: %f ", shooterMotorValue);
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "PWM Value: %f ", rightJoystickValue);
 
 	dsLCD->UpdateLCD();

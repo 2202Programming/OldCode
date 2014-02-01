@@ -29,7 +29,7 @@ public:
 		pneumaticsControl = PneumaticsControl::getInstance();
 		shooterControl = ShooterControl::getInstance();
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 2.0");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 2.2");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(false);
 ;
@@ -56,7 +56,7 @@ public:
 	void OperatorControl(void) {
 		GetWatchdog().SetEnabled(true);
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Operator control");
+		//dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Operator control");
 		dsLCD->UpdateLCD();
 		driveControl.initialize();
 		pneumaticsControl->initialize();
@@ -66,6 +66,7 @@ public:
 			driveControl.runArcadeAutoShift();
 			pneumaticsControl->run();
 			shooterControl->run();
+			dsLCD->UpdateLCD();
 			Wait(0.005); // wait for a motor update time
 		}
 	}

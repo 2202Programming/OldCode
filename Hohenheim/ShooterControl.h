@@ -34,7 +34,7 @@ private:
 	Victor* BallGrabberMotor6;
 	Encoder *shooterEncoder;
 	//Encoder* input;
-	PIDControlSubClass* output;
+	PIDControlSubClass* pIDControlOutput;
 	PIDController* controller;
 	bool isLeft;
 	float Kp;
@@ -46,6 +46,7 @@ private:
 	enum fireStates {
 		Arming, ReadyToFire, Firing,
 	};
+	bool canIFire();
 	enum twoStageFire{
 		Rest, Fired,
 	};
