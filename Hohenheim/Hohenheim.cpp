@@ -29,7 +29,7 @@ public:
 		pneumaticsControl = PneumaticsControl::getInstance();
 		shooterControl = ShooterControl::getInstance();
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 2.0 shift test");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 2.0");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(false);
 ;
