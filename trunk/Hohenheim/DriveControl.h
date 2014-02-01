@@ -42,12 +42,5 @@ private:
 	DigitalInput *lowerLimit;
 	DigitalInput *upperLimit;
 	Timer accelTimer;
-	
-	//Code for Manaul Shooting Set Speed
-	Jaguar* UpperShooter;
-	Jaguar* LowerShooter;
-	 
-	 
-	
 };
 #endif
