@@ -84,7 +84,7 @@ void DriveControl::runArcadeAutoShift() {
 	UpperShooter->Set((rightJoystickValue + frictionValue) / SpeedControl);
 	LowerShooter->Set((rightJoystickValue + frictionValue) / SpeedControl);
 
-
+	float shooterMotorValue = UpperShooter->Get();
 	
 
 	bool leftDirection = leftEncoder->GetDirection();
@@ -137,11 +137,17 @@ void DriveControl::runArcadeAutoShift() {
 	
 	//dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "L: %i LD: %f",
 	//		leftEncoder->Get(), leftEncoder->GetDistance());
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "R: %i RD: %f",
+	/*
+	  
+	 dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "R: %i RD: %f",
 			rightEncoder->Get(), rightEncoder->GetDistance());
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "LS: %f in/s",
 			leftEncoder->GetRate());
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MaxValue: %f ", maxValue);
+	*/
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "ShooterValue: %f ", shooterMotorValue);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "PWM Value: %f ", rightJoystickValue);
+
 	dsLCD->UpdateLCD();
 
 }
