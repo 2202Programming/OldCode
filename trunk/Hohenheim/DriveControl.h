@@ -32,6 +32,8 @@ private:
 	DriverStationLCD *dsLCD;
 	Encoder *leftEncoder;
 	Encoder *rightEncoder;
+	Talon* UpperShooter;
+	Talon* LowerShooter;
 	float MinPower;
 	float maxValue;
 	float RightMotorSpeed;

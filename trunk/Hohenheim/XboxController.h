@@ -35,6 +35,7 @@ public:
 	bool isL3Held();
 	bool isR3Held();
 	bool isRightTriggerHeld();
+	bool isRightTriggerPressed();
 	bool isLeftTriggerHeld();
 	float getAxisRightX();
 	float getAxisRightY();

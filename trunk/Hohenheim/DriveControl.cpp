@@ -32,8 +32,8 @@ DriveControl::DriveControl() :
 	Timer waitTime;
 	counter = 0;
 	maxValue = 0;
-//	UpperShooter = new Jaguar(7);
-//	LowerShooter = new Jaguar(8);
+	//UpperShooter = new Talon(7);
+	//LowerShooter = new Talon(8);
 
 }
 
@@ -55,9 +55,9 @@ void DriveControl::runArcadeAutoShift() {
 	float moveValue = 0.0;
 	float rotateValue = 0.0;
 	float rightJoystickValue = 0.0;
-	
-	rightJoystickValue = xbox->getAxisRightY();
-	
+
+	//rightJoystickValue = xbox->getAxisRightY();
+
 
 	// friction value is added as a constant to motor to make it more responsive to joystick at lower value
 	float frictionValue = 0.0;
@@ -65,27 +65,27 @@ void DriveControl::runArcadeAutoShift() {
 	float SpeedControl = 1.5;
 	moveValue = xbox->getAxisLeftY();
 	rotateValue = xbox->getAxisLeftX();
-	
+
 	// if move value is above the dead zone set friction value to .2
 	if (moveValue > .1) {
 		frictionValue = 0.2;
 	} else if (moveValue < -.1) {
 		frictionValue = -.2;
 	}
-	if (rotateValue > .1) { 
+	if (rotateValue > .1) {
 		rotateFriction = 0.2;
 	} else if (rotateValue < -.1) {
 		rotateFriction = -.2;
 	}
-	
-	myRobot.ArcadeDrive(((moveValue + frictionValue) / SpeedControl),
-			(-1.0 * (rotateValue + rotateFriction)) / SpeedControl);
 
-//	UpperShooter->Set((rightJoystickValue + frictionValue) / SpeedControl);
-//	LowerShooter->Set((rightJoystickValue + frictionValue) / SpeedControl);
+	myRobot.ArcadeDrive(((moveValue + frictionValue)/ SpeedControl),
+			 (rotateValue + rotateFriction) / SpeedControl);
+
+	//UpperShooter->Set((rightJoystickValue + frictionValue) / SpeedControl);
+	//LowerShooter->Set((rightJoystickValue + frictionValue) / SpeedControl);
 
 	//float shooterMotorValue = UpperShooter->Get();
-	
+
 
 	bool leftDirection = leftEncoder->GetDirection();
 	bool rightDirection = rightEncoder->GetDirection();
@@ -105,6 +105,7 @@ void DriveControl::runArcadeAutoShift() {
 	}
 
 	//Auto shifting
+	/*
 	else {
 		if (leftDirection != rightDirection) { //low gear if turning
 			pneumaticsControl->shiftDown();
@@ -124,7 +125,7 @@ void DriveControl::runArcadeAutoShift() {
 			}
 		}
 	}
-
+*/
 	//Returns the MaxSpeed Reached
 	bool reset = xbox->isBPressed();
 	if (reset) {
@@ -134,24 +135,26 @@ void DriveControl::runArcadeAutoShift() {
 		maxValue = averageSpeed;
 	}
 
-	
 	//dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "L: %i LD: %f",
 	//		leftEncoder->Get(), leftEncoder->GetDistance());
 	/*
-	  
+	 
 	 dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "R: %i RD: %f",
-			rightEncoder->Get(), rightEncoder->GetDistance());
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "LS: %f in/s",
-			leftEncoder->GetRate());
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MaxValue: %f ", maxValue);
-	*/
-//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "ShooterValue: %f ", shooterMotorValue);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "PWM Value: %f ", rightJoystickValue);
+	 rightEncoder->Get(), rightEncoder->GetDistance());
+	 dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "LS: %f in/s",
+	 leftEncoder->GetRate());
+	 dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MaxValue: %f ", maxValue);
+	 */
+	//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "ShooterValue: %f ", shooterMotorValue);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "LeftEncode: %f ",
+			leftSpeed);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "RightEncode: %f ",
+			rightSpeed);
+	
 
 	dsLCD->UpdateLCD();
 
 }
-
 
 bool DriveControl::runAuto() {
 	myRobot.ArcadeDrive(AUTOBACKSPEED, AUTOBACKSPEED);

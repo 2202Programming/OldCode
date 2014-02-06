@@ -1,7 +1,6 @@
 #ifndef PNEUMATICSCONTROL_H
 #define PNEUMATICSCONTROL_H
 
-
 #include "WPILib.h"
 #include "XboxController.h"
 
@@ -25,7 +24,14 @@ public:
 	void piston();
 	void ballGrabberExtend();
 	void ballGrabberRetract();
-	int getCompressorPressure();
+	void ballGrabberToggle() {
+		if (isBallGrabberExtended) {
+			ballGrabberRetract();
+		} else {
+			ballGrabberExtend();
+		}
+	}
+
 private:
 	PneumaticsControl();
 	Timer autoTimer;
@@ -34,18 +40,18 @@ private:
 	DriverStationLCD *dsLCD;
 	Compressor *compressor;
 	/*
-	//For shifting
-	Solenoid *rightTrigger;
-	Solenoid *leftTrigger;
-	Solenoid *rightRetract;
-	Solenoid *leftRetract;
-	
-	//For ball pick up
-	Solenoid *extendBallGrabberR;
-	Solenoid *extendBallGrabberL;
-	Solenoid *retractBallGrabberR;
-	Solenoid *retractBallGrabberL;
-	*/
+	 //For shifting
+	 Solenoid *rightTrigger;
+	 Solenoid *leftTrigger;
+	 Solenoid *rightRetract;
+	 Solenoid *leftRetract;
+	 
+	 //For ball pick up
+	 Solenoid *extendBallGrabberR;
+	 Solenoid *extendBallGrabberL;
+	 Solenoid *retractBallGrabberR;
+	 Solenoid *retractBallGrabberL;
+	 */
 	bool shiftState;
 	bool highGear;
 	bool isBallGrabberExtended;
@@ -54,6 +60,7 @@ private:
 	DoubleSolenoid *shiftControlR;
 	DoubleSolenoid *ballGrabberControlL;
 	DoubleSolenoid *ballGrabberControlR;
+	DigitalInput *ballGrabberExtendLimit;
 
 };
 #endif 

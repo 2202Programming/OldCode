@@ -68,6 +68,15 @@ bool XboxController::isRightTriggerHeld() {
 	}
 	return isButtonHeld(rightTrigger, isPressed, JOG_DEBOUNCE);
 }
+
+bool XboxController::isRightTriggerPressed(){
+	bool isPressed = false;
+	if(this->getAxisTrigger() <= -.3){
+		isPressed = true;
+	}
+	return isPressed;
+}
+
 bool XboxController::JogEnabled() {
 	return (this->getAxisLeftX() >= .8) && (fabs(this->getAxisLeftY()) <= .16);
 }
