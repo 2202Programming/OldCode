@@ -23,10 +23,11 @@ PneumaticsControl::PneumaticsControl() {
 	xbox = XboxController::getInstance();
 	dsLCD = DriverStationLCD::GetInstance();
 	compressor = new Compressor(5, 4);
-	shiftControlL = new DoubleSolenoid(8, 7);
-	shiftControlR = new DoubleSolenoid(1, 2);
-	ballGrabberControlR = new DoubleSolenoid(5, 6);
-	ballGrabberControlL = new DoubleSolenoid(3, 4);
+	shiftControlL = new DoubleSolenoid(2,8, 7);
+	shiftControlR = new DoubleSolenoid(2,1, 2);
+//	ballGrabberControlR = new DoubleSolenoid(2,5, 6);
+//	ballGrabberControlL = new DoubleSolenoid(2,3, 4);
+//	ballGrabberExtendLimit = new DigitalInput(4);
 
 	//rightTrigger = new Solenoid(1, 1);
 	//rightRetract = new Solenoid(1, 2);
@@ -45,11 +46,14 @@ PneumaticsControl::PneumaticsControl() {
 void PneumaticsControl::initialize() {
 	// the solenoid shuts itself off automatically at about 120 psi so we do not have to shut it off for safety reasons.
 	compressor->Start();
+	//dsLCD->PrintfLine(DriverStationLCD::kUser_Line6,
+			//	"Compressor Start");
+	//dsLCD->UpdateLCD();
 
 	shiftControlL->Set(DoubleSolenoid::kReverse);
 	shiftControlR->Set(DoubleSolenoid::kReverse);
-	ballGrabberControlR->Set(DoubleSolenoid::kReverse);
-	ballGrabberControlL->Set(DoubleSolenoid::kReverse);
+//	ballGrabberControlR->Set(DoubleSolenoid::kReverse);
+//	ballGrabberControlL->Set(DoubleSolenoid::kReverse);
 
 	/*
 	 rightTrigger->Set(false);
@@ -66,12 +70,9 @@ void PneumaticsControl::initialize() {
 	//leftRetract->Set(true);
 }
 
-int PneumaticsControl::getCompressorPressure() {
-	return compressor->GetPressureSwitchValue();
-}
-
 bool PneumaticsControl::ballGrabberIsExtended() {
-	return isBallGrabberExtended;
+
+	return isBallGrabberExtended && ballGrabberExtendLimit->Get();
 }
 
 void PneumaticsControl::ballGrabberExtend() {
@@ -176,13 +177,19 @@ void PneumaticsControl::shiftDown() {
 
 bool PneumaticsControl::CompressorFull() {
 	if ((compressor->GetPressureSwitchValue()) > 0) {
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line6,
+					"compressor on");
+		dsLCD->UpdateLCD();
 		return true;
 	}
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6,
+				"compressor off");
+	dsLCD->UpdateLCD();
 	return false;
 }
 
 void PneumaticsControl::run() {
 	shift();
-	piston();
+	//piston();
 
 }

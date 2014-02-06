@@ -17,8 +17,9 @@ public:
 	void ballGrabber();
 	void shoot();
 	void PIDShooter();
-	void twoStageShoot();
 	void run();
+	
+	char*GetStateString();
 
 private:
 	PneumaticsControl *pneumaticsControl;
@@ -44,7 +45,7 @@ private:
 	float maxValue;
 	float counter;
 	enum fireStates {
-		Arming, ReadyToFire, Firing,
+		Arming, ReadyToFire, Firing, Init
 	};
 	bool canIFire();
 	enum twoStageFire{
