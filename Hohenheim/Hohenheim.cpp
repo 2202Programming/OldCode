@@ -63,7 +63,7 @@ public:
 		shooterControl->initialize();
 		while (IsOperatorControl() && IsEnabled()) {
 			GetWatchdog().Feed();
-			driveControl.runArcadeAutoShift();
+			driveControl.run();
 			pneumaticsControl->run();
 			shooterControl->run();
 			dsLCD->UpdateLCD();

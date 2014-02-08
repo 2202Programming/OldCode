@@ -15,8 +15,8 @@ public:
 	ShooterControl();
 	void initialize();
 	void ballGrabber();
-	void shoot();
 	void PIDShooter();
+	void ManualShoot();
 	void run();
 	
 	char*GetStateString();
@@ -31,8 +31,8 @@ private:
 	DriverStationLCD *dsLCD;
 	Talon* UpperShooter;
 	Talon* LowerShooter;
-	Victor* BallGrabberMotor5;
-	Victor* BallGrabberMotor6;
+	Talon* BallGrabberMotor5;
+	Talon* BallGrabberMotor6;
 	Encoder *shooterEncoder;
 	//Encoder* input;
 	PIDControlSubClass* pIDControlOutput;

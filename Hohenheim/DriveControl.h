@@ -11,10 +11,8 @@ public:
 	DriveControl();
 	void initialize();
 	void initializeAutonomous();
-	void runArcadeAutoShift();	
-	void runShift();
-	bool runAuto();
 
+	void run();
 
 private:
 	PneumaticsControl *pneumaticsControl;
@@ -22,11 +20,12 @@ private:
 	//float scaledOffset(float originalValue, float minValue, float maxValue);
 	//float scaleValue(float originalValue, float offset);
 	float accelerateMotor(float stickValue, float MotorValue, float loopTime);
-	float accelerateTurnMotor(float stickValue, float MotorValue, float loopTime);
+	float accelerateTurnMotor(float stickValue, float MotorValue,
+			float loopTime);
 	float setControlSpeed(float MotorValue);
 	bool precisionDrive;
 	bool shiftDrive;
-	Timer waitTime; 
+	Timer shiftDelay;
 	RobotDrive myRobot; // robot drive system	
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
@@ -44,5 +43,16 @@ private:
 	DigitalInput *lowerLimit;
 	DigitalInput *upperLimit;
 	Timer accelTimer;
+	void runArcadeDrive();
+	//bool runAuto();
+	void Shifter();
+	enum ShiftStates {
+		Init, Low, High, DelayToLow, DelayToHigh
+	};
+	ShiftStates shiftState;
+	void setLowGear();
+	void setHighGear();
+	int delayCount;
+	
 };
 #endif
