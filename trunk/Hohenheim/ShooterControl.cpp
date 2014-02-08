@@ -22,7 +22,7 @@
 #define RIGHT 5000
 #define HOME 0
 #define READYTOFIRE 100
-#define FIRE 500
+#define FIRE 620
 #define PIDFIRE 650
 #define Kp 0.003
 #define	Ki 0.0
@@ -41,12 +41,13 @@ ShooterControl::ShooterControl() {
 	shooterEncoder = new Encoder(10, 9, false, Encoder::k1X);
 	dsLCD = DriverStationLCD::GetInstance();
 	pneumaticsControl = PneumaticsControl::getInstance();
-	BallGrabberMotor5 = new Victor(BALLGRABBERMOTOR5);
-	BallGrabberMotor6 = new Victor(BALLGRABBERMOTOR6);
-	//UpperShooter = new Talon(UPPERSHOOTER);
-	//LowerShooter = new Talon(LOWERSHOOTER);
+	BallGrabberMotor5 = new Talon(BALLGRABBERMOTOR5);
+	BallGrabberMotor6 = new Talon(BALLGRABBERMOTOR6);
+	UpperShooter = new Talon(UPPERSHOOTER);
+	LowerShooter = new Talon(LOWERSHOOTER);
 	//pIDControlOutput = new PIDControlSubClass(UpperShooter, LowerShooter);
-	//controller = new PIDController(Kp, Ki, Kd, shooterEncoder, pIDControlOutput);
+	//controller
+	//		= new PIDController(Kp, Ki, Kd, shooterEncoder, pIDControlOutput);
 	counter = 0;
 	twoStageFire = Rest;
 	upperLimit = new DigitalInput(UPPERLIMITSWITCH);
@@ -71,6 +72,7 @@ void ShooterControl::initialize() {
 
 /*If B is Pressed, Depending on the PistonState, Retracts or Fires Pistons
  *If A is Held and Pistons are Fired, BallMotorSpeeds are Set to a Value
+ *If Y is Held and Pistons are Fired, BallMotorSpeeds are Set to reverse
  */
 void ShooterControl::ballGrabber() {
 
@@ -80,22 +82,12 @@ void ShooterControl::ballGrabber() {
 
 	if (bPress) {
 		pneumaticsControl->ballGrabberToggle();
-		/*if (!isBallGrabberExtended) {
-		 pneumaticsControl->ballGrabberExtend();
-		 dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "BG: Ext %i", pneumaticsControl->ballGrabberIsExtended());
-		 } else {
-		 pneumaticsControl->ballGrabberRetract();
-		 dsLCD->PrintfLine(DriverStationLCD::kUser_Line3,
-		 "BG: Ret %i", pneumaticsControl->ballGrabberIsExtended());
-		 BallGrabberMotor5->Set(STOPPEDSPEED);
-		 BallGrabberMotor6->Set(STOPPEDSPEED);*/
-
 	}
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "BG: %i",
 			pneumaticsControl->ballGrabberIsExtended());
 
-	if (aHeld) {
-		if (pneumaticsControl->ballGrabberIsExtended()) {
+	if (pneumaticsControl->ballGrabberIsExtended()) {
+		if (aHeld) {
 			if (BallGrabberMotor5->Get() == STOPPEDSPEED) {
 				BallGrabberMotor5->Set(BALLMOTOR5SPEED);
 				BallGrabberMotor6->Set(BALLMOTOR5SPEED);
@@ -126,87 +118,36 @@ void ShooterControl::ballGrabber() {
 		}
 	}
 
+	/*
+	 switch (fireState) {
+	 case Init:
+	 //extend ball grabber
+	 //set both feeders to stop
+	 pneumaticsControl->ballGrabberToggle();
+	 BallGrabberMotor5->Set(STOPPEDSPEED);
+	 BallGrabberMotor6->Set(STOPPEDSPEED);
+	 break;
+	 case Arming:
+	 //extend ball grabber
+	 //set feeders to 0.4(variable?)
+	 pneumaticsControl->ballGrabberToggle();
+	 BallGrabberMotor5->Set(-BALLMOTOR5SPEED);
+	 BallGrabberMotor6->Set(-BALLMOTOR5SPEED);
+	 break;
+	 case ReadyToFire:
+	 //set feeders to 0.4(variable?)
+	 BallGrabberMotor5->Set(-BALLMOTOR5SPEED);
+	 BallGrabberMotor6->Set(-BALLMOTOR5SPEED);
+	 break;
+	 case Firing:
+	 //stop feeders
+	 BallGrabberMotor5->Set(STOPPEDSPEED);
+	 BallGrabberMotor6->Set(STOPPEDSPEED);
+	 break;
+	 }
+	 */
 	int count = shooterEncoder->Get();
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "Count: %i", count);
-	switch (fireState) {
-	case Init: 
-		//extend ball grabber
-		//set both feeders to stop
-		pneumaticsControl->ballGrabberToggle();
-		BallGrabberMotor5->Set(STOPPEDSPEED);
-		BallGrabberMotor6->Set(STOPPEDSPEED);
-		break;
-	case Arming:
-		//extend ball grabber
-		//set feeders to 0.4(variable?)
-		pneumaticsControl->ballGrabberToggle();
-		BallGrabberMotor5->Set(-BALLMOTOR5SPEED);
-		BallGrabberMotor6->Set(-BALLMOTOR5SPEED);
-		break;
-	case ReadyToFire: 
-		//set feeders to 0.4(variable?)
-		BallGrabberMotor5->Set(-BALLMOTOR5SPEED);
-		BallGrabberMotor6->Set(-BALLMOTOR5SPEED);
-		break;
-	case Firing: 
-		//stop feeders
-		BallGrabberMotor5->Set(STOPPEDSPEED);
-		BallGrabberMotor6->Set(STOPPEDSPEED);
-		break;
-	}
-}
-
-/*
- * Switch and Case
- * Initally Goes to Arming State where The Shooter is Dropped all the way
- * Then the code goes to the Next Case ReadyToFire. ReadyToFire Raises Up until a Limit is Reached. Once the limit is Reached, it waits for X-Pressed
- * Once X-Pressed, Goes to Firing Case. Sets the Shooter To A set Speed Fowards
- */
-void ShooterControl::shoot() {
-	/*bool isXPress = xbox->isXPressed();
-	 bool isUpperLimit = upperLimit->Get();
-	 bool isLowerLimit = lowerLimit->Get();
-	 int shooterCount = shooterEncoder->Get();
-
-	 switch (fireState) {
-	 case Arming: {
-	 //arming
-	 if (isLowerLimit) {
-	 UpperShooter->Set(STOPPEDSPEED);
-	 LowerShooter->Set(STOPPEDSPEED);
-	 shooterEncoder->Reset();
-	 fireState = ReadyToFire;
-	 } else {
-	 UpperShooter->Set(ARMINGSPEED);
-	 LowerShooter->Set(ARMINGSPEED);
-	 }
-	 }
-	 break;
-	 case ReadyToFire: {
-	 //ready to fire. Lift up until a value is reached
-	 if (shooterCount >= READYTOFIRELIMIT) {
-	 if (isXPress) {
-	 fireState = Firing;
-	 }
-	 } else {
-	 UpperShooter->Set(LOADINGSPEED);
-	 LowerShooter->Set(LOADINGSPEED);
-	 }
-	 }
-	 break;
-	 case Firing: {
-	 //firing
-	 if (isUpperLimit) {
-	 UpperShooter->Set(STOPPEDSPEED);
-	 LowerShooter->Set(STOPPEDSPEED);
-	 fireState = Arming;
-	 } else {
-	 UpperShooter->Set(FIRESPEED);
-	 LowerShooter->Set(FIRESPEED);
-	 }
-	 }
-	 break;
-	 }*/
 }
 
 bool ShooterControl::canIFire() {
@@ -221,7 +162,6 @@ void ShooterControl::PIDShooter() {
 	bool isLowerLimit = lowerLimit->Get();
 	int count = shooterEncoder->Get();
 
-	//	if (!loadingBall) {
 	switch (fireState) {
 	case Init: {
 		if (isLowerLimit) {
@@ -266,7 +206,8 @@ void ShooterControl::PIDShooter() {
 
 	case ReadyToFire: {
 		//ready to fire. Lift up until a value is reached
-		/*if(controller->Get() < (READYTOFIRE - 50)){ //spin ball grabber motors to help move ball to readyToFire position
+		/*
+		 * if(controller->Get() < (READYTOFIRE - 50)){ //spin ball grabber motors to help move ball to readyToFire position
 		 BallGrabberMotor5->Set(BALLMOTOR5SPEED);
 		 BallGrabberMotor6->Set(BALLMOTOR5SPEED);
 		 }
@@ -277,10 +218,7 @@ void ShooterControl::PIDShooter() {
 		 controller->SetSetpoint(READYTOFIRE);
 		 */
 
-		//if (isXPressed && canIFire()) 
 		if (isRTHeld && canIFire()) {
-			// && abs(((int) (controller->Get())) - READYTOFIRE) <= 100
-
 			fireState = Firing;
 			//immediatly opperate as changing states
 			controller->SetSetpoint(FIRE);
@@ -297,7 +235,6 @@ void ShooterControl::PIDShooter() {
 	case Firing: {
 		//firing
 
-		//if (isYPress) {
 		if (isUpperLimit || !isRTHeld) {
 			controller->Disable();
 			UpperShooter->Set(STOPPEDSPEED);
@@ -311,7 +248,7 @@ void ShooterControl::PIDShooter() {
 	}
 		break;
 	}
-	//	}
+
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "S: %s C: %i",
 			GetStateString(), count);
 
@@ -337,12 +274,20 @@ char*ShooterControl::GetStateString() {
 	}
 }
 
-//Code for shooting if they only want two stage. Without any middle state.
+void ShooterControl::ManualShoot() {
+	float rightValue = 0.0;
+	rightValue = xbox->getAxisRightY();
+	UpperShooter->Set(rightValue);
+	LowerShooter->Set(rightValue);
 
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MotorSpeed %f",
+			rightValue);
+	dsLCD->UpdateLCD();
+}
 
 void ShooterControl::run() {
 	ballGrabber();
-	//shoot();
-	PIDShooter();
+	ManualShoot();
+	//PIDShooter();
 }
 

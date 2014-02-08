@@ -23,8 +23,8 @@ PneumaticsControl::PneumaticsControl() {
 	xbox = XboxController::getInstance();
 	dsLCD = DriverStationLCD::GetInstance();
 	compressor = new Compressor(5, 4);
-	shiftControlL = new DoubleSolenoid(2,8, 7);
-	shiftControlR = new DoubleSolenoid(2,1, 2);
+	shiftControlL = new DoubleSolenoid(1,7,8);
+	shiftControlR = new DoubleSolenoid(1,2,1);
 //	ballGrabberControlR = new DoubleSolenoid(2,5, 6);
 //	ballGrabberControlL = new DoubleSolenoid(2,3, 4);
 //	ballGrabberExtendLimit = new DigitalInput(4);
