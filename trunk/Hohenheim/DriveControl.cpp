@@ -15,11 +15,11 @@
 #define SHIFTLOWSPEED .5
 #define SHIFTHIGHSPEED .85
 #define REVOLUTIONS .05026
-#define FSHIFTUPSPEED 65.0
+#define FSHIFTUPSPEED 50.0
 #define FSHIFTDOWNSPEED 25.0
 #define BSHIFTDOWNSPEED 5.0
 #define BSHIFTUPSPEED 65.0
-#define SHIFTDELAYINSECONDS 3.0
+#define SHIFTDELAYINSECONDS 1.5
 
 DriveControl::DriveControl() :
 	myRobot(FRONTLEFTMOTOR, BACKLEFTMOTOR, FRONTRIGHTMOTOR, BACKRIGHTMOTOR) {
@@ -88,6 +88,9 @@ void DriveControl::Shifter() {
 		}
 		break;
 	}
+	
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "Drive Encoder x: %f", leftSpeed);
+	dsLCD->UpdateLCD();
 }
 
 void DriveControl::setLowGear() {
