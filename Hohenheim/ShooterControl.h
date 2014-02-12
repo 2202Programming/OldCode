@@ -44,18 +44,16 @@ private:
 	float MinPower;
 	float maxValue;
 	float counter;
+	int limitCount;
 	enum fireStates {
-		Arming, ReadyToFire, Firing, Init
+		Arming, ReadyToFire, Firing, Init, Fired,
 	};
 	bool canIFire();
-	enum twoStageFire{
-		Rest, Fired,
-	};
-	twoStageFire twoStageFire;
 	fireStates fireState;
 	bool loadingBall;
 	DigitalInput *lowerLimit;
 	DigitalInput *upperLimit;
+	DigitalInput *five;
 	Timer accelTimer;
 };
 #endif

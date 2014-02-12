@@ -23,11 +23,11 @@ PneumaticsControl::PneumaticsControl() {
 	xbox = XboxController::getInstance();
 	dsLCD = DriverStationLCD::GetInstance();
 	compressor = new Compressor(5, 4);
-	shiftControlL = new DoubleSolenoid(1,7,8);
-	shiftControlR = new DoubleSolenoid(1,2,1);
-//	ballGrabberControlR = new DoubleSolenoid(2,5, 6);
-//	ballGrabberControlL = new DoubleSolenoid(2,3, 4);
-//	ballGrabberExtendLimit = new DigitalInput(4);
+	shiftControlL = new DoubleSolenoid(2,7,8);
+	shiftControlR = new DoubleSolenoid(2,2,1);
+	ballGrabberControlR = new DoubleSolenoid(2,5, 6);
+	ballGrabberControlL = new DoubleSolenoid(2,3, 4);
+	//ballGrabberExtendLimit = new DigitalInput(4);
 
 	//rightTrigger = new Solenoid(1, 1);
 	//rightRetract = new Solenoid(1, 2);
@@ -52,8 +52,8 @@ void PneumaticsControl::initialize() {
 
 	shiftControlL->Set(DoubleSolenoid::kReverse);
 	shiftControlR->Set(DoubleSolenoid::kReverse);
-//	ballGrabberControlR->Set(DoubleSolenoid::kReverse);
-//	ballGrabberControlL->Set(DoubleSolenoid::kReverse);
+	//ballGrabberControlR->Set(DoubleSolenoid::kReverse);
+	//ballGrabberControlL->Set(DoubleSolenoid::kReverse);
 
 	/*
 	 rightTrigger->Set(false);
@@ -72,7 +72,8 @@ void PneumaticsControl::initialize() {
 
 bool PneumaticsControl::ballGrabberIsExtended() {
 
-	return isBallGrabberExtended && ballGrabberExtendLimit->Get();
+	//return isBallGrabberExtended && ballGrabberExtendLimit->Get();
+	return isBallGrabberExtended;
 }
 
 void PneumaticsControl::ballGrabberExtend() {
@@ -117,6 +118,7 @@ bool PneumaticsControl::isHighGear() {
 
 void PneumaticsControl::shift() {
 	bool isRBumper = xbox->isRBumperPressed();
+	int compSwitch = compressor->GetPressureSwitchValue();
 	if (isRBumper) {
 		if (highGear) {
 			highGear = false;
@@ -144,8 +146,11 @@ void PneumaticsControl::shift() {
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "High Gear");
 			dsLCD->UpdateLCD();
 		}
-
+		
+	
 	}
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "High Gear: %i" , compSwitch);
+	dsLCD->UpdateLCD();
 
 }
 
