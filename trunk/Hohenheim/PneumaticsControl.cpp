@@ -52,8 +52,7 @@ void PneumaticsControl::initialize() {
 
 	shiftControlL->Set(DoubleSolenoid::kReverse);
 	shiftControlR->Set(DoubleSolenoid::kReverse);
-	//ballGrabberControlR->Set(DoubleSolenoid::kReverse);
-	//ballGrabberControlL->Set(DoubleSolenoid::kReverse);
+	this->ballGrabberRetract();
 
 	/*
 	 rightTrigger->Set(false);
@@ -78,8 +77,8 @@ bool PneumaticsControl::ballGrabberIsExtended() {
 
 void PneumaticsControl::ballGrabberExtend() {
 	isBallGrabberExtended = true;
-	ballGrabberControlR->Set(DoubleSolenoid::kForward);
-	ballGrabberControlL->Set(DoubleSolenoid::kForward);
+	ballGrabberControlR->Set(DoubleSolenoid::kReverse);
+	ballGrabberControlL->Set(DoubleSolenoid::kReverse);
 
 	/*pistonR->Set(true);
 	 pistonL->Set(true);
@@ -90,8 +89,8 @@ void PneumaticsControl::ballGrabberExtend() {
 
 void PneumaticsControl::ballGrabberRetract() {
 	isBallGrabberExtended = false;
-	ballGrabberControlR->Set(DoubleSolenoid::kReverse);
-	ballGrabberControlL->Set(DoubleSolenoid::kReverse);
+	ballGrabberControlR->Set(DoubleSolenoid::kForward);
+	ballGrabberControlL->Set(DoubleSolenoid::kForward);
 
 	/*
 	 pistonR->Set(false);

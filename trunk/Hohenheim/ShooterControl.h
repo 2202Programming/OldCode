@@ -18,7 +18,7 @@ public:
 	void PIDShooter();
 	void ManualShoot();
 	void run();
-	
+	double downRampProfile (double Time);
 	char*GetStateString();
 
 private:
@@ -29,8 +29,10 @@ private:
 	float setControlSpeed(float MotorValue);
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
-	Talon* UpperShooter;
-	Talon* LowerShooter;
+	Talon* upperShooter;
+	Talon* lowerShooter;
+	Talon* upperShooter2;
+	Talon* lowerShooter2;
 	Talon* BallGrabberMotor5;
 	Talon* BallGrabberMotor6;
 	Encoder *shooterEncoder;
@@ -55,5 +57,7 @@ private:
 	DigitalInput *upperLimit;
 	DigitalInput *five;
 	Timer accelTimer;
+	Timer shooterTimer; 
+	double previousTime; 
 };
 #endif

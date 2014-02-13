@@ -7,11 +7,13 @@ class PIDControlSubClass: public PIDOutput {
 public:
 	virtual ~PIDControlSubClass(){
 	}
-	PIDControlSubClass(PIDOutput*, PIDOutput*);
+	PIDControlSubClass(PIDOutput*, PIDOutput*, PIDOutput*, PIDOutput*);
 	void PIDWrite (float output);
 private:
 PIDOutput* motor1;
 PIDOutput* motor2;
+PIDOutput* motor3;
+PIDOutput* motor4;
 
 };
 #endif
