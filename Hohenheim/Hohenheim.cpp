@@ -29,10 +29,10 @@ public:
 		pneumaticsControl = PneumaticsControl::getInstance();
 		shooterControl = ShooterControl::getInstance();
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 2.2");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 2.3");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(false);
-;
+
 	}
 
 	void DashBoardInput() {
