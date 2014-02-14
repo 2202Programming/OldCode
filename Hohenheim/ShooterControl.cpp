@@ -27,6 +27,7 @@
 #define READYTOFIRE 45
 #define FIRE 310
 #define PIDFIRE 650
+#define COUNTSPERSECOND 50 //for down ramp profile
 #define Kp 0.005
 #define	Ki 0.000002
 #define	Kd 0.0003
@@ -78,13 +79,14 @@ void ShooterControl::initialize() {
 	shooterTimer.Reset();
 	shooterTimer.Start();
 	previousTime = 0.0;
-	
 }
-double ShooterControl::downRampProfile (double Time){
+
+double ShooterControl::downRampProfile (double timeChange){
 	//slope is count per second
 	//NOT DONE
-	LUKASreturn Time * -0.5 + FIRE;
+	return (timeChange * -COUNTSPERSECOND);
 }
+
 /*If B is Pressed, Depending on the PistonState, Retracts or Fires Pistons
  *If A is Held and Pistons are Fired, BallMotorSpeeds are Set to a Value
  *If Y is Held and Pistons are Fired, BallMotorSpeeds are Set to reverse
@@ -154,7 +156,9 @@ void ShooterControl::ballGrabber() {
 		BallGrabberMotor5->Set(STOPPEDSPEED);
 		BallGrabberMotor6->Set(STOPPEDSPEED);
 		break;
-
+	case Retracting:
+		pneumaticsControl->ballGrabberExtend();
+		break;
 	}
 
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "BG: %i ",
@@ -172,6 +176,10 @@ void ShooterControl::PIDShooter() {
 	bool isLTHeld = xbox->isLeftTriggerHeld();
 	bool isUpperLimit = upperLimit->Get() == 0;
 	bool isLowerLimit = lowerLimit->Get() == 0;
+	
+	//for ramping
+	double timeChange = (shooterTimer.Get() - previousTime);
+	previousTime = shooterTimer.Get();
 
 	int count = shooterEncoder->Get();
 	//bool isLowerLimit = abs(count) < 10;
@@ -288,9 +296,19 @@ void ShooterControl::PIDShooter() {
 
 	case Fired:
 		if (!isRTHeld && canIFire()) {
+			//controller->SetSetpoint(READYTOFIRE);
+			//fireState = ReadyToFire;
+			fireState = Retracting;
+		}
+		break;
+	
+	case Retracting:
+		if(controller->GetSetpoint() <= READYTOFIRE + 10){
 			controller->SetSetpoint(READYTOFIRE);
 			fireState = ReadyToFire;
 		}
+		double positionChange = downRampProfile(timeChange);
+		controller->SetSetpoint(controller->GetSetpoint() + positionChange);
 		break;
 	}
 
@@ -315,6 +333,8 @@ char*ShooterControl::GetStateString() {
 
 	case Fired:
 		return "Fired";
+	case Retracting:
+		return "Retracting";
 
 	default:
 		return "";
