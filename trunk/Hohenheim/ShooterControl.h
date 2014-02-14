@@ -18,7 +18,7 @@ public:
 	void PIDShooter();
 	void ManualShoot();
 	void run();
-	double downRampProfile (double Time);
+	double downRampProfile (double timeChange);
 	char*GetStateString();
 
 private:
@@ -48,7 +48,7 @@ private:
 	float counter;
 	int limitCount;
 	enum fireStates {
-		Arming, ReadyToFire, Firing, Init, Fired,
+		Arming, ReadyToFire, Firing, Init, Fired, Retracting
 	};
 	bool canIFire();
 	fireStates fireState;
