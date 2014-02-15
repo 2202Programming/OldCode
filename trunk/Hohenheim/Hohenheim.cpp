@@ -10,7 +10,6 @@
 #include "PneumaticsControl.h"
 #include "ShooterControl.h"
 
-
 #define AUTODRIVETIME .5
 
 class Hohenheim: public SimpleRobot {
@@ -18,10 +17,9 @@ class Hohenheim: public SimpleRobot {
 	DriverStation *driverStation;
 	DriverStationLCD *dsLCD;
 	DriveControl driveControl;
-	PneumaticsControl *pneumaticsControl;	
+	PneumaticsControl *pneumaticsControl;
 	ShooterControl *shooterControl;
 
-	
 public:
 	Hohenheim(void) {
 		driverStation = DriverStation::GetInstance();
@@ -49,8 +47,41 @@ public:
 	}
 
 	void Autonomous(void) {
-	
+		SimpleAutonomous();
 
+	}
+
+	void SimpleAutonomous() {
+
+		pneumaticsControl->initialize();
+		shooterControl->initializeAuto();
+		Timer driveTime;
+		float waitTime = 1.0; // Time we drive the robot
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
+		dsLCD->UpdateLCD();
+		GetWatchdog().SetEnabled(true);
+
+		bool driveNow = false;
+		driveTime.Start();
+
+		while (IsAutonomous() && IsEnabled()) {
+			GetWatchdog().Feed();
+			pneumaticsControl->ballGrabberExtend();
+			if (pneumaticsControl->ballGrabberIsExtended()){
+				shooterControl->autoShoot();
+			}
+			if (shooterControl->doneAutoFire()) {
+				if (driveTime.Get() < waitTime) {
+					driveNow = true;
+				} else if (driveTime.Get() > waitTime) {
+					driveNow = false;
+					driveTime.Stop();
+				}
+
+			}
+			driveControl.autoDrive(driveNow);
+
+		}
 	}
 
 	void OperatorControl(void) {
@@ -70,8 +101,6 @@ public:
 			Wait(0.005); // wait for a motor update time
 		}
 	}
-
-
 
 };
 
