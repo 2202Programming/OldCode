@@ -14,12 +14,15 @@ public:
 	static ShooterControl *getInstance();
 	ShooterControl();
 	void initialize();
+	void initializeAuto();
+	void autoShoot(); //for autonomous mode
 	void ballGrabber();
 	void PIDShooter();
 	void ManualShoot();
 	void run();
 	double downRampProfile (double timeChange);
 	char*GetStateString();
+	bool doneAutoFire();
 
 private:
 	PneumaticsControl *pneumaticsControl;
@@ -50,6 +53,10 @@ private:
 	enum fireStates {
 		Arming, ReadyToFire, Firing, Init, Fired, Retracting
 	};
+	enum autoFireStates {
+		AutoInit, AutoReady, AutoFire
+	};
+	autoFireStates autoFireState;
 	bool canIFire();
 	fireStates fireState;
 	bool loadingBall;
@@ -59,5 +66,7 @@ private:
 	Timer accelTimer;
 	Timer shooterTimer; 
 	double previousTime; 
+	bool autoShot;
+	bool doneAutoFired;
 };
 #endif

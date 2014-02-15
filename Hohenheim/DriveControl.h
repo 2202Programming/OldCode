@@ -11,7 +11,7 @@ public:
 	DriveControl();
 	void initialize();
 	void initializeAutonomous();
-
+	void autoDrive(bool timeAllowed);
 	void run();
 
 private:

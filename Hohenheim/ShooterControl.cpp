@@ -51,7 +51,8 @@ ShooterControl::ShooterControl() {
 	lowerShooter = new Talon(LOWERSHOOTER);
 	upperShooter2 = new Talon(UPPERSHOOTER2);
 	lowerShooter2 = new Talon(LOWERSHOOTER2);
-	pIDControlOutput = new PIDControlSubClass(upperShooter, lowerShooter, upperShooter2, lowerShooter2 );
+	pIDControlOutput = new PIDControlSubClass(upperShooter, lowerShooter,
+			upperShooter2, lowerShooter2);
 	controller
 			= new PIDController(Kp, Ki, Kd, shooterEncoder, pIDControlOutput);
 	counter = 0;
@@ -61,12 +62,11 @@ ShooterControl::ShooterControl() {
 	five = new DigitalInput(4);
 	maxValue = 0;
 	loadingBall = false;
-	
-	
+
+	autoShot = false; //turns to true as soon as it is shot in autonomous
 }
 
 void ShooterControl::initialize() {
-
 	shooterEncoder->Reset();
 	shooterEncoder->Start();
 	shooterEncoder->SetDistancePerPulse(1);
@@ -81,7 +81,47 @@ void ShooterControl::initialize() {
 	previousTime = 0.0;
 }
 
-double ShooterControl::downRampProfile (double timeChange){
+void ShooterControl::initializeAuto() {
+	shooterEncoder->Reset();
+	shooterEncoder->Start();
+	shooterEncoder->SetDistancePerPulse(1);
+	shooterEncoder->SetPIDSourceParameter(Encoder::kDistance);
+	controller->SetPercentTolerance(85);
+	controller->SetContinuous();
+	controller->Disable();
+	autoFireState = AutoInit;
+	doneAutoFired = false;
+}
+
+void ShooterControl::autoShoot() {
+	initializeAuto();
+	switch(autoFireState){
+	case AutoInit:
+		controller->Enable();
+		controller->SetSetpoint(READYTOFIRE);
+		autoFireState = AutoReady;
+		break;
+	case AutoReady:
+		if (shooterEncoder->Get() > READYTOFIRE - 10 && canIFire()){
+			controller->Disable();
+			pIDControlOutput->PIDWrite(SHOOTINGSPEED);
+			autoFireState = AutoFire;
+		}
+		break;
+	case AutoFire:
+		if (upperLimit || shooterEncoder->Get() > FIRE){
+			pIDControlOutput->PIDWrite(STOPPEDSPEED);
+			doneAutoFired = true;
+		} else {
+			pIDControlOutput->PIDWrite(SHOOTINGSPEED);
+		}
+		break;
+	}
+}
+bool ShooterControl:: doneAutoFire(){
+	return doneAutoFired; 
+}
+double ShooterControl::downRampProfile(double timeChange) {
 	//slope is count per second
 	//NOT DONE
 	return (timeChange * -COUNTSPERSECOND);
@@ -176,7 +216,7 @@ void ShooterControl::PIDShooter() {
 	bool isLTHeld = xbox->isLeftTriggerHeld();
 	bool isUpperLimit = upperLimit->Get() == 0;
 	bool isLowerLimit = lowerLimit->Get() == 0;
-	
+
 	//for ramping
 	double timeChange = (shooterTimer.Get() - previousTime);
 	previousTime = shooterTimer.Get();
@@ -301,9 +341,9 @@ void ShooterControl::PIDShooter() {
 			fireState = Retracting;
 		}
 		break;
-	
+
 	case Retracting:
-		if(controller->GetSetpoint() <= READYTOFIRE + 10){
+		if (controller->GetSetpoint() <= READYTOFIRE + 10) {
 			controller->SetSetpoint(READYTOFIRE);
 			fireState = ReadyToFire;
 		}

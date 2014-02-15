@@ -149,6 +149,14 @@ void DriveControl::runArcadeDrive() {
 	dsLCD->UpdateLCD();
 
 }
+
+void DriveControl::autoDrive(bool timeAllowed){
+	if(timeAllowed){
+		myRobot.Drive(0.4,0.001);	
+	}else{
+		myRobot.Drive(0.001,0.001);
+	}
+}
 void DriveControl::run() {
 	Shifter();
 	runArcadeDrive();
