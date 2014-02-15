@@ -27,7 +27,7 @@ public:
 		pneumaticsControl = PneumaticsControl::getInstance();
 		shooterControl = ShooterControl::getInstance();
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 2.3");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 2.5");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(false);
 
@@ -52,17 +52,15 @@ public:
 	}
 
 	void SimpleAutonomous() {
-
 		pneumaticsControl->initialize();
 		shooterControl->initializeAuto();
 		Timer driveTime;
-		float waitTime = 1.0; // Time we drive the robot
+		float waitTime = 2.0; // Time we drive the robot
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(true);
-
 		bool driveNow = false;
-		driveTime.Start();
+	
 
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
@@ -71,13 +69,13 @@ public:
 				shooterControl->autoShoot();
 			}
 			if (shooterControl->doneAutoFire()) {
+				driveTime.Start();
 				if (driveTime.Get() < waitTime) {
 					driveNow = true;
 				} else if (driveTime.Get() > waitTime) {
 					driveNow = false;
 					driveTime.Stop();
 				}
-
 			}
 			driveControl.autoDrive(driveNow);
 
@@ -100,6 +98,7 @@ public:
 			dsLCD->UpdateLCD();
 			Wait(0.005); // wait for a motor update time
 		}
+		pneumaticsControl->disable();
 	}
 
 };

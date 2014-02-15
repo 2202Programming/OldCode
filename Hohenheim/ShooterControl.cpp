@@ -24,13 +24,16 @@
 #define READYTOFIRELIMIT 100
 #define RIGHT 5000
 #define HOME 0
-#define READYTOFIRE 45
-#define FIRE 310
+#define READYTOFIRE 70
+#define FIRE 290
 #define PIDFIRE 650
-#define COUNTSPERSECOND 50 //for down ramp profile
-#define Kp 0.005
-#define	Ki 0.000002
-#define	Kd 0.0003
+#define COUNTSPERSECOND 225.0 //for down ramp profile
+#define SHOOTCPS 1100.0 //for the shoot ramp
+#define PASSCPS 200.0 //rate of the passing ramp
+#define TRUSSCPS 500.0 //rate of the truss throw ramp 
+#define Kp 0.010
+#define	Ki 0.00012
+#define	Kd 0.001
 
 static ShooterControl *shootercontrol = NULL;
 ShooterControl *ShooterControl::getInstance() {
@@ -42,7 +45,7 @@ ShooterControl *ShooterControl::getInstance() {
 
 ShooterControl::ShooterControl() {
 	xbox = XboxController::getInstance();
-	shooterEncoder = new Encoder(10, 9, true, Encoder::k1X); //change 3rd param. to false for production robot
+	shooterEncoder = new Encoder(10, 9, true, Encoder::k4X); //change 3rd param. to false for production robot
 	dsLCD = DriverStationLCD::GetInstance();
 	pneumaticsControl = PneumaticsControl::getInstance();
 	BallGrabberMotor5 = new Talon(BALLGRABBERMOTOR5);
@@ -62,7 +65,9 @@ ShooterControl::ShooterControl() {
 	five = new DigitalInput(4);
 	maxValue = 0;
 	loadingBall = false;
-
+	LED1 = new Relay(1, Relay::kForwardOnly);
+	LED2 = new Relay(3, Relay::kForwardOnly);
+	LED3 = new Relay(5, Relay::kForwardOnly);
 	autoShot = false; //turns to true as soon as it is shot in autonomous
 }
 
@@ -78,10 +83,18 @@ void ShooterControl::initialize() {
 	shooterTimer.Stop();
 	shooterTimer.Reset();
 	shooterTimer.Start();
-	previousTime = 0.0;
+	previousTime = shooterTimer.Get();
+	LED1->Set(Relay::kOn);
+	LED2->Set(Relay::kOn);
+	LED3->Set(Relay::kOn);
+	//LED1->Set(1);
+	//LED2->Set(1);
+	//LED3->Set(1);
 }
 
 void ShooterControl::initializeAuto() {
+	shooterTimer.Stop();
+	shooterTimer.Reset();
 	shooterEncoder->Reset();
 	shooterEncoder->Start();
 	shooterEncoder->SetDistancePerPulse(1);
@@ -91,42 +104,94 @@ void ShooterControl::initializeAuto() {
 	controller->Disable();
 	autoFireState = AutoInit;
 	doneAutoFired = false;
+	previousTime = 0.0;
 }
 
 void ShooterControl::autoShoot() {
-	initializeAuto();
-	switch(autoFireState){
+	bool isUpperLimit = upperLimit->Get() == 0;
+
+	if (!doneAutoFired) {
+		switch (autoFireState) {
+		case AutoInit:
+			controller->Enable();
+			controller->SetSetpoint(READYTOFIRE);
+			autoFireState = AutoReady;
+			shooterTimer.Start();
+			previousTime = shooterTimer.Get();
+			break;
+		case AutoReady:
+			if ((shooterEncoder->Get() > READYTOFIRE - 10)
+					&& (shooterEncoder->Get() < READYTOFIRE + 10) && canIFire()) {
+				if ((shooterTimer.Get() - previousTime) > 2.0) {
+					//controller->Disable();
+					//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
+					autoFireState = AutoFire;
+					shooterTimer.Stop();
+					shooterTimer.Reset();
+					previousTime = shooterTimer.Get();
+					shooterTimer.Start();
+				}
+			}
+			break;
+		case AutoFire:
+			if (isUpperLimit || shooterEncoder->Get() > FIRE) {
+				controller->SetSetpoint(FIRE);
+				doneAutoFired = true;
+			} else {
+				//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
+				double timeChange = shooterTimer.Get() - previousTime;
+				previousTime = shooterTimer.Get();
+				double countChange = shootRampProfile(timeChange);
+				double newSetpoint = controller->GetSetpoint() + countChange;
+				if (newSetpoint >= FIRE) {
+					newSetpoint = FIRE;
+				}
+				controller->SetSetpoint(newSetpoint);
+			}
+			break;
+		}
+
+	}
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "AS: %s",
+			GetAutoStateString());
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "EncoderC: %i",
+			shooterEncoder->Get());
+	dsLCD->UpdateLCD();
+
+}
+char*ShooterControl::GetAutoStateString() {
+
+	switch (autoFireState) {
 	case AutoInit:
-		controller->Enable();
-		controller->SetSetpoint(READYTOFIRE);
-		autoFireState = AutoReady;
-		break;
+		return "AutoInit";
 	case AutoReady:
-		if (shooterEncoder->Get() > READYTOFIRE - 10 && canIFire()){
-			controller->Disable();
-			pIDControlOutput->PIDWrite(SHOOTINGSPEED);
-			autoFireState = AutoFire;
-		}
-		break;
+		return "AutoReady";
 	case AutoFire:
-		if (upperLimit || shooterEncoder->Get() > FIRE){
-			pIDControlOutput->PIDWrite(STOPPEDSPEED);
-			doneAutoFired = true;
-		} else {
-			pIDControlOutput->PIDWrite(SHOOTINGSPEED);
-		}
-		break;
+		return "AutoFire";
+	default:
+		return "";
 	}
 }
-bool ShooterControl:: doneAutoFire(){
-	return doneAutoFired; 
+
+bool ShooterControl::doneAutoFire() {
+	return doneAutoFired;
 }
+
 double ShooterControl::downRampProfile(double timeChange) {
 	//slope is count per second
 	//NOT DONE
 	return (timeChange * -COUNTSPERSECOND);
 }
 
+double ShooterControl::shootRampProfile(double timeChange) {
+	return (timeChange * SHOOTCPS);
+}
+double ShooterControl::passRampProfile(double timeChange) {
+	return (timeChange * PASSCPS);
+}
+double ShooterControl::trussRampProfile(double timeChange) {
+	return (timeChange * TRUSSCPS);
+}
 /*If B is Pressed, Depending on the PistonState, Retracts or Fires Pistons
  *If A is Held and Pistons are Fired, BallMotorSpeeds are Set to a Value
  *If Y is Held and Pistons are Fired, BallMotorSpeeds are Set to reverse
@@ -226,8 +291,6 @@ void ShooterControl::PIDShooter() {
 	switch (fireState) {
 	case Init:
 		if (isLowerLimit) {
-			//upperShooter->Set(STOPPEDSPEED);
-			//lowerShooter->Set(STOPPEDSPEED);
 			pIDControlOutput->PIDWrite(STOPPEDSPEED);
 			shooterEncoder->Reset();
 			controller->Enable();
@@ -235,8 +298,6 @@ void ShooterControl::PIDShooter() {
 			fireState = ReadyToFire;
 		} else {
 			if (canIFire()) {
-				//UpperShooter->Set(ARMINGSPEED);
-				//LowerShooter->Set(ARMINGSPEED);
 				pIDControlOutput->PIDWrite(ARMINGSPEED);
 			}
 		}
@@ -247,21 +308,15 @@ void ShooterControl::PIDShooter() {
 		//arming
 		//controller->SetSetpoint(HOME);
 		if (isLowerLimit) {
-			//UpperShooter->Set(STOPPEDSPEED);
-			//LowerShooter->Set(STOPPEDSPEED);
 			pIDControlOutput->PIDWrite(STOPPEDSPEED);
 			shooterEncoder->Reset();
 			controller->Enable();
 			controller->SetSetpoint(HOME);
 			//fireState = ReadyToFire;
 		} else {
-			//UpperShooter->Set(ARMINGSPEED);
-			//LowerShooter->Set(ARMINGSPEED);
 			pIDControlOutput->PIDWrite(ARMINGSPEED);
 		}
 		if (!isLTHeld) {
-			//UpperShooter->Set(STOPPEDSPEED);
-			//LowerShooter->Set(STOPPEDSPEED);
 			pIDControlOutput->PIDWrite(STOPPEDSPEED);
 			controller->Enable();
 			controller->SetSetpoint(READYTOFIRE);
@@ -272,24 +327,13 @@ void ShooterControl::PIDShooter() {
 
 	case ReadyToFire:
 		//ready to fire. Lift up until a value is reached
-		/*
-		 * if(controller->Get() < (READYTOFIRE - 50)){ //spin ball grabber motors to help move ball to readyToFire position
-		 BallGrabberMotor5->Set(BALLMOTOR5SPEED);
-		 BallGrabberMotor6->Set(BALLMOTOR5SPEED);
-		 }
-		 else{
-		 BallGrabberMotor5->Set(STOPPEDSPEED);
-		 BallGrabberMotor6->Set(STOPPEDSPEED);
-		 }
-		 controller->SetSetpoint(READYTOFIRE);
-		 */
-		if ((count > READYTOFIRE - 10) && (count < READYTOFIRE + 10)) {
+
+		if ((count > READYTOFIRE - 3) && (count < READYTOFIRE + 3)) {
 			if (isRTHeld && canIFire()) {
 				fireState = Firing;
-				controller->Disable();
-				//UpperShooter->Set(SHOOTINGSPEED);
-				//LowerShooter->Set(SHOOTINGSPEED);
-				pIDControlOutput->PIDWrite(SHOOTINGSPEED);
+
+				//controller->Disable();
+				//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
 				//immediatly opperate as changing states
 				//controller->SetSetpoint(FIRE);
 			}
@@ -297,8 +341,6 @@ void ShooterControl::PIDShooter() {
 		if (isLTHeld) {
 			fireState = Arming;
 			controller->Disable();
-			//UpperShooter->Set(ARMINGSPEED);
-			//LowerShooter->Set(ARMINGSPEED);
 			pIDControlOutput->PIDWrite(ARMINGSPEED);
 
 		}
@@ -308,27 +350,28 @@ void ShooterControl::PIDShooter() {
 	case Firing:
 		//firing
 		if (!isRTHeld) {
-			//UpperShooter->Set(STOPPEDSPEED);
-			//LowerShooter->Set(STOPPEDSPEED);
-			pIDControlOutput->PIDWrite(STOPPEDSPEED);
 			if (canIFire()) {
-				controller->Enable();
-				controller->SetSetpoint(READYTOFIRE);
-				fireState = ReadyToFire;
+				fireState = Retracting;
+				controller->SetSetpoint(shooterEncoder->Get());
 			} else {
-				controller->Enable();
 				controller->SetSetpoint(shooterEncoder->Get());
 				fireState = Fired;
 			}
 		} else {
-			if (isUpperLimit || shooterEncoder->Get() > FIRE) {
-				controller->Enable();
+			if (isUpperLimit || shooterEncoder->Get() >= FIRE) {
 				controller->SetSetpoint(FIRE);
 				fireState = Fired;
 			} else {
 				//UpperShooter->Set(SHOOTINGSPEED);
 				//LowerShooter->Set(SHOOTINGSPEED);
-				pIDControlOutput->PIDWrite(SHOOTINGSPEED);
+				//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
+				double countChange = shootRampProfile(timeChange);
+				double newSetpoint = controller->GetSetpoint() + countChange;
+				if (newSetpoint >= FIRE) {
+					newSetpoint = FIRE;
+				}
+				controller->SetSetpoint(newSetpoint);
+
 			}
 		}
 
@@ -343,12 +386,16 @@ void ShooterControl::PIDShooter() {
 		break;
 
 	case Retracting:
-		if (controller->GetSetpoint() <= READYTOFIRE + 10) {
+		if (this->shooterEncoder->Get() <= READYTOFIRE + 10) {
 			controller->SetSetpoint(READYTOFIRE);
 			fireState = ReadyToFire;
 		}
 		double positionChange = downRampProfile(timeChange);
-		controller->SetSetpoint(controller->GetSetpoint() + positionChange);
+		double newSetpoint = controller->GetSetpoint() + positionChange;
+		if (newSetpoint <= READYTOFIRE) {
+			newSetpoint = READYTOFIRE;
+		}
+		controller->SetSetpoint(newSetpoint);
 		break;
 	}
 
@@ -412,7 +459,7 @@ void ShooterControl::ManualShoot() {
 
 void ShooterControl::run() {
 	ballGrabber();
-	//ManualShoot();
-	PIDShooter();
+	ManualShoot();
+	//PIDShooter();
 }
 

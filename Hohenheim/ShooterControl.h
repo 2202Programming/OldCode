@@ -6,7 +6,6 @@
 #include "PneumaticsControl.h"
 #include "PIDControlSubClass.h"
 
-
 class ShooterControl {
 public:
 	~ShooterControl() {
@@ -20,11 +19,16 @@ public:
 	void PIDShooter();
 	void ManualShoot();
 	void run();
-	double downRampProfile (double timeChange);
+
 	char*GetStateString();
+	char*GetAutoStateString();
 	bool doneAutoFire();
 
 private:
+	double downRampProfile(double timeChange);
+	double shootRampProfile(double timeChange);
+	double passRampProfile(double timeChange);
+	double trussRampProfile(double timeChange);
 	PneumaticsControl *pneumaticsControl;
 	float accelerateMotor(float stickValue, float MotorValue, float loopTime);
 	float accelerateTurnMotor(float stickValue, float MotorValue,
@@ -64,9 +68,12 @@ private:
 	DigitalInput *upperLimit;
 	DigitalInput *five;
 	Timer accelTimer;
-	Timer shooterTimer; 
-	double previousTime; 
+	Timer shooterTimer;
+	double previousTime;
 	bool autoShot;
 	bool doneAutoFired;
+	Relay *LED1;
+	Relay *LED2;
+	Relay *LED3;
 };
 #endif

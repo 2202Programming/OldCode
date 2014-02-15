@@ -128,7 +128,7 @@ void DriveControl::runArcadeDrive() {
 	}
 
 	myRobot.ArcadeDrive(((moveValue + frictionValue) / SpeedControl),
-			(rotateValue + rotateFriction) / SpeedControl);
+			((rotateValue + rotateFriction) / SpeedControl) );
 
 	
 	bool lbPressed = xbox->isLBumperHeld();
@@ -152,9 +152,9 @@ void DriveControl::runArcadeDrive() {
 
 void DriveControl::autoDrive(bool timeAllowed){
 	if(timeAllowed){
-		myRobot.Drive(0.4,0.001);	
+		myRobot.Drive(0.4,0.0);	
 	}else{
-		myRobot.Drive(0.001,0.001);
+		myRobot.Drive(0.0,0.0);
 	}
 }
 void DriveControl::run() {
