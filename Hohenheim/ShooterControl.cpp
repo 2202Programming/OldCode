@@ -24,16 +24,17 @@
 #define READYTOFIRELIMIT 100
 #define RIGHT 5000
 #define HOME 0
-#define READYTOFIRE 70
-#define FIRE 290
+#define READYTOFIRE 90
+#define FIRE 290 * 0.95
 #define PIDFIRE 650
 #define COUNTSPERSECOND 225.0 //for down ramp profile
-#define SHOOTCPS 1100.0 //for the shoot ramp
+#define SHOOTCPS 5000.0 //for the shoot ramp
 #define PASSCPS 200.0 //rate of the passing ramp
 #define TRUSSCPS 500.0 //rate of the truss throw ramp 
+#define LOADCPS 150.0
 #define Kp 0.010
-#define	Ki 0.00012
-#define	Kd 0.001
+#define	Ki 0.00024
+#define	Kd 0.005
 
 static ShooterControl *shootercontrol = NULL;
 ShooterControl *ShooterControl::getInstance() {
@@ -186,11 +187,17 @@ double ShooterControl::downRampProfile(double timeChange) {
 double ShooterControl::shootRampProfile(double timeChange) {
 	return (timeChange * SHOOTCPS);
 }
+
 double ShooterControl::passRampProfile(double timeChange) {
 	return (timeChange * PASSCPS);
 }
+
 double ShooterControl::trussRampProfile(double timeChange) {
 	return (timeChange * TRUSSCPS);
+}
+
+double ShooterControl::loadRampProfile(double timeChange) {
+	return (timeChange * LOADCPS);
 }
 /*If B is Pressed, Depending on the PistonState, Retracts or Fires Pistons
  *If A is Held and Pistons are Fired, BallMotorSpeeds are Set to a Value
@@ -294,7 +301,7 @@ void ShooterControl::PIDShooter() {
 			pIDControlOutput->PIDWrite(STOPPEDSPEED);
 			shooterEncoder->Reset();
 			controller->Enable();
-			controller->SetSetpoint(READYTOFIRE);
+			//controller->SetSetpoint(READYTOFIRE);
 			fireState = ReadyToFire;
 		} else {
 			if (canIFire()) {
@@ -319,7 +326,7 @@ void ShooterControl::PIDShooter() {
 		if (!isLTHeld) {
 			pIDControlOutput->PIDWrite(STOPPEDSPEED);
 			controller->Enable();
-			controller->SetSetpoint(READYTOFIRE);
+			//controller->SetSetpoint(READYTOFIRE);
 			fireState = ReadyToFire;
 		}
 
@@ -337,6 +344,13 @@ void ShooterControl::PIDShooter() {
 				//immediatly opperate as changing states
 				//controller->SetSetpoint(FIRE);
 			}
+		} else {
+			double positionChange = loadRampProfile(timeChange);
+			double newSetpoint = controller->GetSetpoint() + positionChange;
+			if (newSetpoint >= READYTOFIRE) {
+				newSetpoint = READYTOFIRE;
+			}
+			controller->SetSetpoint(newSetpoint);
 		}
 		if (isLTHeld) {
 			fireState = Arming;
@@ -450,7 +464,7 @@ void ShooterControl::ManualShoot() {
 	//UpperShooter->Set((rightValue / 3.0));
 	//LowerShooter->Set((rightValue / 3.0));
 	pIDControlOutput->PIDWrite(rightValue / 2.0);
-	float count = shooterEncoder->Get();
+	float count = shooterEncoder->GetRaw();
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "Count x: %f", count);
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "MotorSpeed %f",
 			rightValue);
@@ -459,7 +473,7 @@ void ShooterControl::ManualShoot() {
 
 void ShooterControl::run() {
 	ballGrabber();
-	ManualShoot();
-	//PIDShooter();
+	//ManualShoot();
+	PIDShooter();
 }
 
