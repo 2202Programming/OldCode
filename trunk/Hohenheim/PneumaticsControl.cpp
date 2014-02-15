@@ -23,11 +23,13 @@ PneumaticsControl::PneumaticsControl() {
 	xbox = XboxController::getInstance();
 	dsLCD = DriverStationLCD::GetInstance();
 	compressor = new Compressor(5, 4);
-	shiftControlL = new DoubleSolenoid(2,7,8);
-	shiftControlR = new DoubleSolenoid(2,2,1);
-	ballGrabberControlR = new DoubleSolenoid(2,5, 6);
-	ballGrabberControlL = new DoubleSolenoid(2,3, 4);
-	//ballGrabberExtendLimit = new DigitalInput(4);
+
+
+	shiftControlL = new DoubleSolenoid(2, 7, 8);
+	shiftControlR = new DoubleSolenoid(2, 2, 1);
+	ballGrabberControlR = new DoubleSolenoid(2, 5, 6);
+	ballGrabberControlL = new DoubleSolenoid(2, 3, 4);
+	ballGrabberExtendLimit = new DigitalInput(4);
 
 	//rightTrigger = new Solenoid(1, 1);
 	//rightRetract = new Solenoid(1, 2);
@@ -46,8 +48,9 @@ PneumaticsControl::PneumaticsControl() {
 void PneumaticsControl::initialize() {
 	// the solenoid shuts itself off automatically at about 120 psi so we do not have to shut it off for safety reasons.
 	compressor->Start();
+	
 	//dsLCD->PrintfLine(DriverStationLCD::kUser_Line6,
-			//	"Compressor Start");
+	//	"Compressor Start");
 	//dsLCD->UpdateLCD();
 
 	shiftControlL->Set(DoubleSolenoid::kReverse);
@@ -61,7 +64,7 @@ void PneumaticsControl::initialize() {
 	 leftRetract->Set(true);
 	 pistonR->Set(false);
 	 pistonL->Set(false);
-	 retractPistonR->Set(true);
+	 retractPistonR->Set(true);0
 	 retractPistonL->Set(true);
 	 */
 
@@ -71,8 +74,8 @@ void PneumaticsControl::initialize() {
 
 bool PneumaticsControl::ballGrabberIsExtended() {
 
-	//return isBallGrabberExtended && ballGrabberExtendLimit->Get();
-	return isBallGrabberExtended;
+	
+	return isBallGrabberExtended && (ballGrabberExtendLimit->Get() == 0);
 }
 
 void PneumaticsControl::ballGrabberExtend() {
@@ -145,10 +148,10 @@ void PneumaticsControl::shift() {
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "High Gear");
 			dsLCD->UpdateLCD();
 		}
-		
-	
+
 	}
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "High Gear: %i" , compSwitch);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "High Gear: %i",
+			compSwitch);
 	dsLCD->UpdateLCD();
 
 }
@@ -181,13 +184,11 @@ void PneumaticsControl::shiftDown() {
 
 bool PneumaticsControl::CompressorFull() {
 	if ((compressor->GetPressureSwitchValue()) > 0) {
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line6,
-					"compressor on");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "compressor on");
 		dsLCD->UpdateLCD();
 		return true;
 	}
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6,
-				"compressor off");
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "compressor off");
 	dsLCD->UpdateLCD();
 	return false;
 }
@@ -197,3 +198,11 @@ void PneumaticsControl::run() {
 	//piston();
 
 }
+void PneumaticsControl::disable() {
+	compressor->Stop();
+	shiftControlL->Set(DoubleSolenoid::kOff);
+	shiftControlR->Set(DoubleSolenoid::kOff);
+	ballGrabberControlR->Set(DoubleSolenoid::kOff);
+	ballGrabberControlL->Set(DoubleSolenoid::kOff);
+}
+

@@ -22,6 +22,7 @@ public:
 	bool isHighGear();
 	bool ballGrabberIsExtended();
 	void piston();
+	void disable();
 	void ballGrabberExtend();
 	void ballGrabberRetract();
 	void ballGrabberToggle() {
@@ -61,6 +62,8 @@ private:
 	DoubleSolenoid *ballGrabberControlL;
 	DoubleSolenoid *ballGrabberControlR;
 	DigitalInput *ballGrabberExtendLimit;
+	
+
 
 };
 #endif 
