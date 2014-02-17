@@ -60,14 +60,16 @@ public:
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(true);
 		bool driveNow = false;
-	
+		Timer shootWaitTime;
+		bool shootIsOn = false;
 
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
-			pneumaticsControl->ballGrabberExtend();
-			if (pneumaticsControl->ballGrabberIsExtended()){
-				shooterControl->autoShoot();
+			if (!pneumaticsControl->ballGrabberIsExtended()) {
+				shooterControl->autoLoad(true);
 			}
+			pneumaticsControl->ballGrabberExtend();
+
 			if (shooterControl->doneAutoFire()) {
 				driveTime.Start();
 				if (driveTime.Get() < waitTime) {
@@ -75,6 +77,19 @@ public:
 				} else if (driveTime.Get() > waitTime) {
 					driveNow = false;
 					driveTime.Stop();
+				}
+			} else {
+				if (pneumaticsControl->ballGrabberIsExtended()) {
+					shooterControl->autoLoad(false);
+					if (!shootIsOn) {
+						shootWaitTime.Start();
+						shootIsOn = true;
+					}
+					if (shootWaitTime.Get() > waitTime) {
+						shooterControl->autoShoot();
+						shootWaitTime.Stop();
+						shootWaitTime.Reset();
+					}
 				}
 			}
 			driveControl.autoDrive(driveNow);

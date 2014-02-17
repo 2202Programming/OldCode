@@ -15,11 +15,11 @@
 #define SHIFTLOWSPEED .5
 #define SHIFTHIGHSPEED .85
 #define REVOLUTIONS .05026
-#define FSHIFTUPSPEED 50.0
-#define FSHIFTDOWNSPEED 25.0
-#define BSHIFTDOWNSPEED 5.0
-#define BSHIFTUPSPEED 65.0
-#define SHIFTDELAYINSECONDS 1.5
+#define FSHIFTUPSPEED 60.0
+#define FSHIFTDOWNSPEED 50.0
+#define BSHIFTDOWNSPEED 50.0
+#define BSHIFTUPSPEED 60.0
+#define SHIFTDELAYINSECONDS 1.0
 
 DriveControl::DriveControl() :
 	myRobot(FRONTLEFTMOTOR, BACKLEFTMOTOR, FRONTRIGHTMOTOR, BACKRIGHTMOTOR) {
@@ -47,6 +47,7 @@ void DriveControl::initialize() {
 	leftEncoder->SetDistancePerPulse(REVOLUTIONS);
 	rightEncoder->SetDistancePerPulse(REVOLUTIONS);
 	shiftState = Init;
+	//pneumaticsControl->shiftUp();
 
 }
 void DriveControl::Shifter() {
