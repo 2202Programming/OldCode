@@ -19,6 +19,8 @@ public:
 	void PIDShooter();
 	void ManualShoot();
 	void run();
+	void autoLoad(bool on);
+	void toggleColor();
 
 	char*GetStateString();
 	char*GetAutoStateString();
@@ -73,6 +75,7 @@ private:
 	double previousTime;
 	bool autoShot;
 	bool doneAutoFired;
+	int lightCounter;
 	Relay *LED1;
 	Relay *LED2;
 	Relay *LED3;

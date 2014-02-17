@@ -24,14 +24,14 @@
 #define READYTOFIRELIMIT 100
 #define RIGHT 5000
 #define HOME 0
-#define READYTOFIRE 90
-#define FIRE 290 * 0.95
+#define READYTOFIRE 70 // 90
+#define FIRE 290 * 1.05
 #define PIDFIRE 650
 #define COUNTSPERSECOND 225.0 //for down ramp profile
-#define SHOOTCPS 5000.0 //for the shoot ramp
+#define SHOOTCPS 2000.0 //for the shoot ramp
 #define PASSCPS 200.0 //rate of the passing ramp
 #define TRUSSCPS 500.0 //rate of the truss throw ramp 
-#define LOADCPS 150.0
+#define LOADCPS 100.0
 #define Kp 0.010
 #define	Ki 0.00024
 #define	Kd 0.005
@@ -85,9 +85,10 @@ void ShooterControl::initialize() {
 	shooterTimer.Reset();
 	shooterTimer.Start();
 	previousTime = shooterTimer.Get();
-	LED1->Set(Relay::kOn);
-	LED2->Set(Relay::kOn);
-	LED3->Set(Relay::kOn);
+	//LED1->Set(Relay::kOn);
+	//LED2->Set(Relay::kOn);
+	//LED3->Set(Relay::kOn);
+	lightCounter = 0;
 	//LED1->Set(1);
 	//LED2->Set(1);
 	//LED3->Set(1);
@@ -108,31 +109,112 @@ void ShooterControl::initializeAuto() {
 	previousTime = 0.0;
 }
 
+void ShooterControl::autoLoad(bool on) {
+	if (on) {
+		BallGrabberMotor5->Set(-BALLMOTOR5SPEED * 0.75);
+		BallGrabberMotor6->Set(-BALLMOTOR5SPEED * 0.75);
+	} else {
+		BallGrabberMotor5->Set(STOPPEDSPEED);
+		BallGrabberMotor6->Set(STOPPEDSPEED);
+	}
+}
+
+void ShooterControl::toggleColor() {
+	bool isStartPressed = xbox->isStartPressed();
+	//red=1, blue 3, 2=unused
+	if(isStartPressed){
+		if(lightCounter == 0){
+			LED1->Set(Relay::kOn);
+			LED3->Set(Relay::kOff);
+			lightCounter++;
+		}else if(lightCounter == 1){
+			LED1->Set(Relay::kOff);
+			LED3->Set(Relay::kOn);
+			lightCounter++;
+		}else if(lightCounter == 2){
+			LED1->Set(Relay::kOn);
+			LED3->Set(Relay::kOn);
+			lightCounter = 0;
+		}
+	}
+	
+	/*
+	if (lightCounter == 0) {
+		//0-red
+		LED1->Set(Relay::kOn);
+		LED3->Set(Relay::kOff);
+	} else {
+		if (lightCounter == 1) {
+			//1-blue
+			LED1->Set(Relay::kOff);
+			LED3->Set(Relay::kOn);
+		} else {
+			//2-both
+			LED1->Set(Relay::kOn);
+			LED3->Set(Relay::kOn);
+		}
+	}
+	if (isStartPressed) {
+		if (lightCounter = 2) {
+			lightCounter = 0;
+		} else {
+			lightCounter++;
+		}
+	}
+	*/
+	//LED1->Set(Relay::kOn);
+	//LED2->Set(Relay::kOn);
+	//LED3->Set(Relay::kOn);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "Counter: %i",
+				lightCounter);
+	dsLCD->UpdateLCD();
+
+	
+}
+
 void ShooterControl::autoShoot() {
 	bool isUpperLimit = upperLimit->Get() == 0;
+	double timeChange = (shooterTimer.Get() - previousTime);
+	previousTime = shooterTimer.Get();
 
+	int count = shooterEncoder->Get();
 	if (!doneAutoFired) {
 		switch (autoFireState) {
 		case AutoInit:
 			controller->Enable();
-			controller->SetSetpoint(READYTOFIRE);
+			controller->SetSetpoint(0.0);
+			shooterEncoder->Reset();
+			//controller->SetSetpoint(READYTOFIRE);
 			autoFireState = AutoReady;
 			shooterTimer.Start();
-			previousTime = shooterTimer.Get();
+			//previousTime = shooterTimer.Get();
 			break;
 		case AutoReady:
-			if ((shooterEncoder->Get() > READYTOFIRE - 10)
-					&& (shooterEncoder->Get() < READYTOFIRE + 10) && canIFire()) {
-				if ((shooterTimer.Get() - previousTime) > 2.0) {
-					//controller->Disable();
-					//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
+			if ((count > READYTOFIRE - 6) && (count < READYTOFIRE + 6)) {
+				controller->SetSetpoint(READYTOFIRE);
+				if (canIFire()) {
 					autoFireState = AutoFire;
-					shooterTimer.Stop();
-					shooterTimer.Reset();
-					previousTime = shooterTimer.Get();
-					shooterTimer.Start();
 				}
+			} else {
+				double positionChange = loadRampProfile(timeChange);
+				double newSetpoint = controller->GetSetpoint() + positionChange;
+				if (newSetpoint >= READYTOFIRE) {
+					newSetpoint = READYTOFIRE;
+				}
+				controller->SetSetpoint(newSetpoint);
 			}
+			/*if ((shooterEncoder->Get() > READYTOFIRE - 10)
+			 && (shooterEncoder->Get() < READYTOFIRE + 10) && canIFire()) {
+			 if ((shooterTimer.Get() - previousTime) > 1.0) {
+			 //controller->Disable();
+			 //pIDControlOutput->PIDWrite(SHOOTINGSPEED);
+			 autoFireState = AutoFire;
+			 shooterTimer.Stop();
+			 shooterTimer.Reset();
+			 previousTime = shooterTimer.Get();
+			 shooterTimer.Start();
+			 }
+			 }*/
 			break;
 		case AutoFire:
 			if (isUpperLimit || shooterEncoder->Get() > FIRE) {
@@ -140,8 +222,8 @@ void ShooterControl::autoShoot() {
 				doneAutoFired = true;
 			} else {
 				//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
-				double timeChange = shooterTimer.Get() - previousTime;
-				previousTime = shooterTimer.Get();
+				//double timeChange = shooterTimer.Get() - previousTime;
+				//previousTime = shooterTimer.Get();
 				double countChange = shootRampProfile(timeChange);
 				double newSetpoint = controller->GetSetpoint() + countChange;
 				if (newSetpoint >= FIRE) {
@@ -204,48 +286,43 @@ double ShooterControl::loadRampProfile(double timeChange) {
  *If Y is Held and Pistons are Fired, BallMotorSpeeds are Set to reverse
  */
 void ShooterControl::ballGrabber() {
-	bool aHeld = xbox->isAPressed();
+	//bool aHeld = xbox->isAPressed();
 	bool bPress = xbox->isBPressed();
-	bool yHeld = xbox->isYPressed();
+	bool yHeld = xbox->isYHeld();
 
 	if (bPress) {
 		pneumaticsControl->ballGrabberToggle();
 	}
 
 	//	if (pneumaticsControl->ballGrabberIsExtended()) {
-	if (aHeld) {
-		if (BallGrabberMotor5->Get() == STOPPEDSPEED) {
-			BallGrabberMotor5->Set(BALLMOTOR5SPEED);
-			BallGrabberMotor6->Set(BALLMOTOR5SPEED);
-		} else {
-			BallGrabberMotor5->Set(STOPPEDSPEED);
-			BallGrabberMotor6->Set(STOPPEDSPEED);
-		}
-	}
 	/*
+	 if (aHeld) {
+	 if (BallGrabberMotor5->Get() == STOPPEDSPEED) {
+	 BallGrabberMotor5->Set(BALLMOTOR5SPEED);
+	 BallGrabberMotor6->Set(BALLMOTOR5SPEED);
 	 } else {
 	 BallGrabberMotor5->Set(STOPPEDSPEED);
 	 BallGrabberMotor6->Set(STOPPEDSPEED);
 	 }
 	 }
-	 */
-	if (yHeld) {
-		//if (pneumaticsControl->ballGrabberIsExtended()) {
-		if (BallGrabberMotor5->Get() == STOPPEDSPEED) {
-			BallGrabberMotor5->Set(-BALLMOTOR5SPEED);
-			BallGrabberMotor6->Set(-BALLMOTOR5SPEED);
-		} else {
-			BallGrabberMotor5->Set(STOPPEDSPEED);
-			BallGrabberMotor6->Set(STOPPEDSPEED);
-		}
-		/*
-		 } else {
-		 BallGrabberMotor5->Set(STOPPEDSPEED);
-		 BallGrabberMotor6->Set(STOPPEDSPEED);
-		 }
-		 */
-	}
 
+	 if (yHeld) {
+	 //if (pneumaticsControl->ballGrabberIsExtended()) {
+	 if (BallGrabberMotor5->Get() == STOPPEDSPEED) {
+	 BallGrabberMotor5->Set(-BALLMOTOR5SPEED);
+	 BallGrabberMotor6->Set(-BALLMOTOR5SPEED);
+	 } else {
+	 BallGrabberMotor5->Set(STOPPEDSPEED);
+	 BallGrabberMotor6->Set(STOPPEDSPEED);
+	 }
+	 //
+	 } else {
+	 BallGrabberMotor5->Set(STOPPEDSPEED);
+	 BallGrabberMotor6->Set(STOPPEDSPEED);
+	 }
+	 //
+	 }
+	 */
 	switch (fireState) {
 	case Init:
 		//extend ball grabber
@@ -258,8 +335,13 @@ void ShooterControl::ballGrabber() {
 		//extend ball grabber
 		//set feeders to 0.4(variable?)
 		pneumaticsControl->ballGrabberExtend();
-		BallGrabberMotor5->Set(-BALLMOTOR5SPEED);
-		BallGrabberMotor6->Set(-BALLMOTOR5SPEED);
+		if (yHeld) {
+			BallGrabberMotor5->Set(BALLMOTOR5SPEED);
+			BallGrabberMotor6->Set(BALLMOTOR5SPEED);
+		} else {
+			BallGrabberMotor5->Set(-BALLMOTOR5SPEED);
+			BallGrabberMotor6->Set(-BALLMOTOR5SPEED);
+		}
 		break;
 	case ReadyToFire:
 	case Fired:
@@ -328,6 +410,7 @@ void ShooterControl::PIDShooter() {
 			controller->Enable();
 			//controller->SetSetpoint(READYTOFIRE);
 			fireState = ReadyToFire;
+
 		}
 
 		break;
@@ -475,5 +558,6 @@ void ShooterControl::run() {
 	ballGrabber();
 	//ManualShoot();
 	PIDShooter();
+	toggleColor();
 }
 
