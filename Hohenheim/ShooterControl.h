@@ -58,7 +58,7 @@ private:
 	float counter;
 	int limitCount;
 	enum fireStates {
-		Arming, ReadyToFire, Firing, Init, Fired, Retracting
+		Arming, ReadyToFire, Firing, Init, Fired, Retracting, Home, Passing, TrussShot
 	};
 	enum autoFireStates {
 		AutoInit, AutoReady, AutoFire

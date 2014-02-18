@@ -27,7 +27,7 @@ public:
 		pneumaticsControl = PneumaticsControl::getInstance();
 		shooterControl = ShooterControl::getInstance();
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 2.5");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 3.0");
 		dsLCD->UpdateLCD();
 		GetWatchdog().SetEnabled(false);
 
@@ -131,7 +131,7 @@ public:
 		while (IsOperatorControl() && IsEnabled()) {
 			GetWatchdog().Feed();
 			driveControl.run();
-			pneumaticsControl->run();
+			//pneumaticsControl->run();
 			shooterControl->run();
 			dsLCD->UpdateLCD();
 			Wait(0.005); // wait for a motor update time

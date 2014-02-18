@@ -21,16 +21,17 @@
 #define LOADINGSPEED 0.4 
 #define ARMINGSPEED -0.1
 #define SHOOTINGSPEED 0.5
-#define READYTOFIRELIMIT 100
+//#define READYTOFIRELIMIT 100
 #define RIGHT 5000
 #define HOME 0
+#define ARMING 0
 #define READYTOFIRE 70 // 90
 #define FIRE 290 * 1.05
-#define PIDFIRE 650
-#define COUNTSPERSECOND 225.0 //for down ramp profile
+#define TRUSS 250
+#define RETRACTCPS  150.0 //for down ramp profile
 #define SHOOTCPS 2000.0 //for the shoot ramp
 #define PASSCPS 200.0 //rate of the passing ramp
-#define TRUSSCPS 500.0 //rate of the truss throw ramp 
+#define TRUSSCPS 1300.0 //rate of the truss throw ramp 
 #define LOADCPS 100.0
 #define Kp 0.010
 #define	Ki 0.00024
@@ -122,54 +123,53 @@ void ShooterControl::autoLoad(bool on) {
 void ShooterControl::toggleColor() {
 	bool isStartPressed = xbox->isStartPressed();
 	//red=1, blue 3, 2=unused
-	if(isStartPressed){
-		if(lightCounter == 0){
+	if (isStartPressed) {
+		if (lightCounter == 0) {
 			LED1->Set(Relay::kOn);
 			LED3->Set(Relay::kReverse);
 			lightCounter++;
-		}else if(lightCounter == 1){
+		} else if (lightCounter == 1) {
 			LED1->Set(Relay::kReverse);
 			LED3->Set(Relay::kOn);
 			lightCounter++;
-		}else if(lightCounter == 2){
+		} else if (lightCounter == 2) {
 			LED1->Set(Relay::kOn);
 			LED3->Set(Relay::kOn);
 			lightCounter = 0;
 		}
 	}
-	
+
 	/*
-	if (lightCounter == 0) {
-		//0-red
-		LED1->Set(Relay::kOn);
-		LED3->Set(Relay::kOff);
-	} else {
-		if (lightCounter == 1) {
-			//1-blue
-			LED1->Set(Relay::kOff);
-			LED3->Set(Relay::kOn);
-		} else {
-			//2-both
-			LED1->Set(Relay::kOn);
-			LED3->Set(Relay::kOn);
-		}
-	}
-	if (isStartPressed) {
-		if (lightCounter = 2) {
-			lightCounter = 0;
-		} else {
-			lightCounter++;
-		}
-	}
-	*/
+	 if (lightCounter == 0) {
+	 //0-red
+	 LED1->Set(Relay::kOn);
+	 LED3->Set(Relay::kOff);
+	 } else {
+	 if (lightCounter == 1) {
+	 //1-blue
+	 LED1->Set(Relay::kOff);
+	 LED3->Set(Relay::kOn);
+	 } else {
+	 //2-both
+	 LED1->Set(Relay::kOn);
+	 LED3->Set(Relay::kOn);
+	 }
+	 }
+	 if (isStartPressed) {
+	 if (lightCounter = 2) {
+	 lightCounter = 0;
+	 } else {
+	 lightCounter++;
+	 }
+	 }
+	 */
 	//LED1->Set(Relay::kOn);
 	//LED2->Set(Relay::kOn);
 	//LED3->Set(Relay::kOn);
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "Counter: %i",
-				lightCounter);
+			lightCounter);
 	dsLCD->UpdateLCD();
 
-	
 }
 
 void ShooterControl::autoShoot() {
@@ -263,7 +263,7 @@ bool ShooterControl::doneAutoFire() {
 double ShooterControl::downRampProfile(double timeChange) {
 	//slope is count per second
 	//NOT DONE
-	return (timeChange * -COUNTSPERSECOND);
+	return (timeChange * -RETRACTCPS);
 }
 
 double ShooterControl::shootRampProfile(double timeChange) {
@@ -288,73 +288,40 @@ double ShooterControl::loadRampProfile(double timeChange) {
 void ShooterControl::ballGrabber() {
 	//bool aHeld = xbox->isAPressed();
 	bool bPress = xbox->isBPressed();
-	bool yHeld = xbox->isYHeld();
+	//bool yHeld = xbox->isYHeld();
 
 	if (bPress) {
 		pneumaticsControl->ballGrabberToggle();
 	}
 
-	//	if (pneumaticsControl->ballGrabberIsExtended()) {
-	/*
-	 if (aHeld) {
-	 if (BallGrabberMotor5->Get() == STOPPEDSPEED) {
-	 BallGrabberMotor5->Set(BALLMOTOR5SPEED);
-	 BallGrabberMotor6->Set(BALLMOTOR5SPEED);
-	 } else {
-	 BallGrabberMotor5->Set(STOPPEDSPEED);
-	 BallGrabberMotor6->Set(STOPPEDSPEED);
-	 }
-	 }
-
-	 if (yHeld) {
-	 //if (pneumaticsControl->ballGrabberIsExtended()) {
-	 if (BallGrabberMotor5->Get() == STOPPEDSPEED) {
-	 BallGrabberMotor5->Set(-BALLMOTOR5SPEED);
-	 BallGrabberMotor6->Set(-BALLMOTOR5SPEED);
-	 } else {
-	 BallGrabberMotor5->Set(STOPPEDSPEED);
-	 BallGrabberMotor6->Set(STOPPEDSPEED);
-	 }
-	 //
-	 } else {
-	 BallGrabberMotor5->Set(STOPPEDSPEED);
-	 BallGrabberMotor6->Set(STOPPEDSPEED);
-	 }
-	 //
-	 }
-	 */
+	double ballGrabberOutput = STOPPEDSPEED;
 	switch (fireState) {
+	case Home:
 	case Init:
-		//extend ball grabber
-		//set both feeders to stop
-		pneumaticsControl->ballGrabberExtend();
-		BallGrabberMotor5->Set(STOPPEDSPEED);
-		BallGrabberMotor6->Set(STOPPEDSPEED);
+		pneumaticsControl->ballGrabberRetract();
 		break;
 	case Arming:
-		//extend ball grabber
-		//set feeders to 0.4(variable?)
 		pneumaticsControl->ballGrabberExtend();
-		if (yHeld) {
-			BallGrabberMotor5->Set(BALLMOTOR5SPEED);
-			BallGrabberMotor6->Set(BALLMOTOR5SPEED);
-		} else {
-			BallGrabberMotor5->Set(-BALLMOTOR5SPEED);
-			BallGrabberMotor6->Set(-BALLMOTOR5SPEED);
+		if (pneumaticsControl->ballGrabberIsExtended()) {
+			ballGrabberOutput = -BALLMOTOR5SPEED;
 		}
 		break;
-	case ReadyToFire:
+	case Retracting:
 	case Fired:
 	case Firing:
-		//stop feeders
-		BallGrabberMotor5->Set(STOPPEDSPEED);
-		BallGrabberMotor6->Set(STOPPEDSPEED);
-		break;
-	case Retracting:
+	case ReadyToFire:
 		pneumaticsControl->ballGrabberExtend();
+		break;
+	case Passing:
+		if (!pneumaticsControl->ballGrabberIsExtended()) {
+			ballGrabberOutput = BALLMOTOR5SPEED;
+		}
+	default:
 		break;
 	}
 
+	BallGrabberMotor5->Set(ballGrabberOutput);
+	BallGrabberMotor6->Set(ballGrabberOutput);
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "BG: %i ",
 			pneumaticsControl->ballGrabberIsExtended());
 	dsLCD->UpdateLCD();
@@ -370,6 +337,9 @@ void ShooterControl::PIDShooter() {
 	bool isLTHeld = xbox->isLeftTriggerHeld();
 	bool isUpperLimit = upperLimit->Get() == 0;
 	bool isLowerLimit = lowerLimit->Get() == 0;
+	bool isRBHeld = xbox->isRBumperHeld();
+	//			bool isAHeld = xbox->isAHeld();
+	bool isXHeld = xbox->isXHeld();
 
 	//for ramping
 	double timeChange = (shooterTimer.Get() - previousTime);
@@ -384,13 +354,32 @@ void ShooterControl::PIDShooter() {
 			shooterEncoder->Reset();
 			controller->Enable();
 			//controller->SetSetpoint(READYTOFIRE);
-			fireState = ReadyToFire;
+			fireState = Home;
 		} else {
 			if (canIFire()) {
 				pIDControlOutput->PIDWrite(ARMINGSPEED);
 			}
 		}
 
+		break;
+
+	case Home:
+		controller->SetSetpoint(HOME);
+		if (isRBHeld) {
+			fireState = ReadyToFire;
+		}
+		if (isLTHeld) {
+			fireState = Arming;
+		}
+		if (isRTHeld) {
+			fireState = Passing;
+		}
+		break;
+
+	case Passing:
+		if (!isRTHeld) {
+			fireState = Home;
+		}
 		break;
 
 	case Arming:
@@ -400,7 +389,7 @@ void ShooterControl::PIDShooter() {
 			pIDControlOutput->PIDWrite(STOPPEDSPEED);
 			shooterEncoder->Reset();
 			controller->Enable();
-			controller->SetSetpoint(HOME);
+			controller->SetSetpoint(ARMING);
 			//fireState = ReadyToFire;
 		} else {
 			pIDControlOutput->PIDWrite(ARMINGSPEED);
@@ -409,23 +398,25 @@ void ShooterControl::PIDShooter() {
 			pIDControlOutput->PIDWrite(STOPPEDSPEED);
 			controller->Enable();
 			//controller->SetSetpoint(READYTOFIRE);
-			fireState = ReadyToFire;
+			fireState = Home;
 
 		}
-
 		break;
 
 	case ReadyToFire:
 		//ready to fire. Lift up until a value is reached
-
-		if ((count > READYTOFIRE - 3) && (count < READYTOFIRE + 3)) {
+		if (!isRBHeld) {
+			controller->SetSetpoint(shooterEncoder->Get());
+			fireState = Retracting;
+		} else if ((count > READYTOFIRE - 3) && (count < READYTOFIRE + 3)) {
 			if (isRTHeld && canIFire()) {
 				fireState = Firing;
-
-				//controller->Disable();
-				//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
-				//immediatly opperate as changing states
-				//controller->SetSetpoint(FIRE);
+			}
+			//			if (isAHeld) {
+			//
+			//			}
+			if (isXHeld) {
+				fireState = TrussShot;
 			}
 		} else {
 			double positionChange = loadRampProfile(timeChange);
@@ -435,15 +426,33 @@ void ShooterControl::PIDShooter() {
 			}
 			controller->SetSetpoint(newSetpoint);
 		}
-		if (isLTHeld) {
-			fireState = Arming;
-			controller->Disable();
-			pIDControlOutput->PIDWrite(ARMINGSPEED);
-
-		}
-
 		break;
 
+	case TrussShot:
+		if (!isRTHeld) {
+			if (canIFire()) {
+				fireState = Retracting;
+				controller->SetSetpoint(shooterEncoder->Get());
+			} else {
+				controller->SetSetpoint(shooterEncoder->Get());
+				fireState = Fired;
+			}
+		} else {
+			if (isUpperLimit || shooterEncoder->Get() >= TRUSS) {
+				controller->SetSetpoint(TRUSS);
+				fireState = Fired;
+			} else {
+				double countChange = trussRampProfile(timeChange);
+				double newSetpoint = controller->GetSetpoint() + countChange;
+				if (newSetpoint >= FIRE) {
+					newSetpoint = FIRE;
+				}
+				controller->SetSetpoint(newSetpoint);
+
+			}
+		}
+		break;
+		
 	case Firing:
 		//firing
 		if (!isRTHeld) {
@@ -468,7 +477,6 @@ void ShooterControl::PIDShooter() {
 					newSetpoint = FIRE;
 				}
 				controller->SetSetpoint(newSetpoint);
-
 			}
 		}
 
@@ -483,19 +491,20 @@ void ShooterControl::PIDShooter() {
 		break;
 
 	case Retracting:
-		if (this->shooterEncoder->Get() <= READYTOFIRE + 10) {
-			controller->SetSetpoint(READYTOFIRE);
-			fireState = ReadyToFire;
+		if (this->shooterEncoder->Get() <= HOME + 5) {
+			controller->SetSetpoint(HOME);
+			fireState = Home;
 		}
 		double positionChange = downRampProfile(timeChange);
 		double newSetpoint = controller->GetSetpoint() + positionChange;
-		if (newSetpoint <= READYTOFIRE) {
-			newSetpoint = READYTOFIRE;
+		if (newSetpoint <= HOME) {
+			newSetpoint = HOME;
 		}
 		controller->SetSetpoint(newSetpoint);
 		break;
+	default:
+		break;
 	}
-
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "S: %s C: %i",
 			GetStateString(), count);
 

@@ -72,30 +72,7 @@ bool PneumaticsControl::isHighGear() {
 	return highGear;
 }
 
-void PneumaticsControl::shift() {
-	bool isRBumper = xbox->isRBumperPressed();
-	int compSwitch = compressor->GetPressureSwitchValue();
-	if (isRBumper) {
-		if (highGear) {
-			highGear = false;
-			shiftControlL->Set(DoubleSolenoid::kForward);
-			shiftControlR->Set(DoubleSolenoid::kForward);
-			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "Low Gear");
-			dsLCD->UpdateLCD();
-		} else {
-			highGear = true;
-			shiftControlL->Set(DoubleSolenoid::kReverse);
-			shiftControlR->Set(DoubleSolenoid::kReverse);
-			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "High Gear");
-			dsLCD->UpdateLCD();
-		}
 
-	}
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "High Gear: %i",
-			compSwitch);
-	dsLCD->UpdateLCD();
-
-}
 
 void PneumaticsControl::shiftUp() {
 	highGear = true;
@@ -113,22 +90,7 @@ void PneumaticsControl::shiftDown() {
 	dsLCD->UpdateLCD();
 }
 
-bool PneumaticsControl::CompressorFull() {
-	if ((compressor->GetPressureSwitchValue()) > 0) {
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "compressor on");
-		dsLCD->UpdateLCD();
-		return true;
-	}
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "compressor off");
-	dsLCD->UpdateLCD();
-	return false;
-}
 
-void PneumaticsControl::run() {
-	shift();
-	//piston();
-
-}
 void PneumaticsControl::disable() {
 	compressor->Stop();
 	shiftControlL->Set(DoubleSolenoid::kOff);

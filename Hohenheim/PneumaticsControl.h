@@ -14,9 +14,9 @@ public:
 	}
 	static PneumaticsControl *getInstance();
 	void initialize();
-	void run();
-	bool CompressorFull();
-	void shift();
+	//void run();
+	//bool CompressorFull();
+	//void shift();
 	void shiftUp();
 	void shiftDown();
 	bool isHighGear();
