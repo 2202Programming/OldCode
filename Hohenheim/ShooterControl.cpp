@@ -66,9 +66,9 @@ ShooterControl::ShooterControl() {
 	five = new DigitalInput(4);
 	maxValue = 0;
 	loadingBall = false;
-	LED1 = new Relay(1, Relay::kForwardOnly);
-	LED2 = new Relay(3, Relay::kForwardOnly);
-	LED3 = new Relay(5, Relay::kForwardOnly);
+	LED1 = new Relay(1, Relay::kBothDirections);
+	LED2 = new Relay(3, Relay::kBothDirections);
+	LED3 = new Relay(5, Relay::kBothDirections);
 	autoShot = false; //turns to true as soon as it is shot in autonomous
 }
 
@@ -125,10 +125,10 @@ void ShooterControl::toggleColor() {
 	if(isStartPressed){
 		if(lightCounter == 0){
 			LED1->Set(Relay::kOn);
-			LED3->Set(Relay::kOff);
+			LED3->Set(Relay::kReverse);
 			lightCounter++;
 		}else if(lightCounter == 1){
-			LED1->Set(Relay::kOff);
+			LED1->Set(Relay::kReverse);
 			LED3->Set(Relay::kOn);
 			lightCounter++;
 		}else if(lightCounter == 2){

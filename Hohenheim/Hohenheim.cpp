@@ -47,11 +47,34 @@ public:
 	}
 
 	void Autonomous(void) {
-		SimpleAutonomous();
+		ShootThenDriveAuto(); //Auto Mode to shoot then move foward
+		//DriveAuto(); 		  		//Auto Mode to move foward 
+		//AimShootThenDriveAuto();  //Auto Mode to aim shoot then move foward
 
 	}
+	void DriveAuto() {
+		pneumaticsControl->initialize();
+		Timer driveTime;
+		float waitTime = 2.0; // Time we drive the robot
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
+		dsLCD->UpdateLCD();
+		GetWatchdog().SetEnabled(true);
+		bool driveNow = false;
+		while (IsAutonomous() && IsEnabled()) {
+			GetWatchdog().Feed();
+			driveTime.Start();
+			driveControl.autoDrive(driveNow);
+			if (driveTime.Get() < waitTime) {
+				driveNow = true;
+			} else if (driveTime.Get() > waitTime) {
+				driveNow = false;
+				driveTime.Stop();
+			}
+		
+		}
+	}
 
-	void SimpleAutonomous() {
+	void ShootThenDriveAuto() {
 		pneumaticsControl->initialize();
 		shooterControl->initializeAuto();
 		Timer driveTime;
