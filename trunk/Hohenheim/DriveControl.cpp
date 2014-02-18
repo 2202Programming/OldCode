@@ -20,6 +20,9 @@
 #define BSHIFTDOWNSPEED 50.0
 #define BSHIFTUPSPEED 60.0
 #define SHIFTDELAYINSECONDS 1.0
+#define DRIVECURVE 0.1
+#define DRIVESPEED 0.4
+#define STOPPEDSPEED 0.0
 
 DriveControl::DriveControl() :
 	myRobot(FRONTLEFTMOTOR, BACKLEFTMOTOR, FRONTRIGHTMOTOR, BACKRIGHTMOTOR) {
@@ -47,7 +50,7 @@ void DriveControl::initialize() {
 	leftEncoder->SetDistancePerPulse(REVOLUTIONS);
 	rightEncoder->SetDistancePerPulse(REVOLUTIONS);
 	shiftState = Init;
-	//pneumaticsControl->shiftUp();
+	pneumaticsControl->shiftUp();
 
 }
 void DriveControl::Shifter() {
@@ -132,13 +135,12 @@ void DriveControl::runArcadeDrive() {
 			((rotateValue + rotateFriction) / SpeedControl) );
 
 	
-	bool lbPressed = xbox->isLBumperHeld();
-	bool rbPressed = xbox->isRBumperHeld();
-
+	bool lbHeld = xbox->isLBumperHeld();
+	
 	//manual override
-	if (lbPressed) { //shift down if lb is held
+	if (lbHeld) { //shift down if lb is held
 		pneumaticsControl->shiftDown();
-	} else if (rbPressed) { //shift up if rb is held
+	} else { 
 		pneumaticsControl->shiftUp();
 	}
 
@@ -153,13 +155,13 @@ void DriveControl::runArcadeDrive() {
 
 void DriveControl::autoDrive(bool timeAllowed){
 	if(timeAllowed){
-		myRobot.Drive(0.4,0.0);	
+		myRobot.Drive(DRIVESPEED,DRIVECURVE);	
 	}else{
-		myRobot.Drive(0.0,0.0);
+		myRobot.Drive(STOPPEDSPEED, STOPPEDSPEED);
 	}
 }
 void DriveControl::run() {
-	Shifter();
+	//Shifter();
 	runArcadeDrive();
 	}
 /*
