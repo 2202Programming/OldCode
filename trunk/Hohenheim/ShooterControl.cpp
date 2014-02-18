@@ -297,8 +297,10 @@ void ShooterControl::ballGrabber() {
 	double ballGrabberOutput = STOPPEDSPEED;
 	switch (fireState) {
 	case Home:
-	case Init:
 		pneumaticsControl->ballGrabberRetract();
+		break;
+	case Init:
+		pneumaticsControl->ballGrabberExtend();
 		break;
 	case Arming:
 		pneumaticsControl->ballGrabberExtend();
@@ -313,6 +315,7 @@ void ShooterControl::ballGrabber() {
 		pneumaticsControl->ballGrabberExtend();
 		break;
 	case Passing:
+		pneumaticsControl->ballGrabberRetract();
 		if (!pneumaticsControl->ballGrabberIsExtended()) {
 			ballGrabberOutput = BALLMOTOR5SPEED;
 		}
@@ -353,7 +356,7 @@ void ShooterControl::PIDShooter() {
 			pIDControlOutput->PIDWrite(STOPPEDSPEED);
 			shooterEncoder->Reset();
 			controller->Enable();
-			//controller->SetSetpoint(READYTOFIRE);
+			controller->SetSetpoint(HOME);
 			fireState = Home;
 		} else {
 			if (canIFire()) {
@@ -444,15 +447,15 @@ void ShooterControl::PIDShooter() {
 			} else {
 				double countChange = trussRampProfile(timeChange);
 				double newSetpoint = controller->GetSetpoint() + countChange;
-				if (newSetpoint >= FIRE) {
-					newSetpoint = FIRE;
+				if (newSetpoint >= TRUSS) {
+					newSetpoint = TRUSS;
 				}
 				controller->SetSetpoint(newSetpoint);
 
 			}
 		}
 		break;
-		
+
 	case Firing:
 		//firing
 		if (!isRTHeld) {
@@ -528,7 +531,8 @@ char*ShooterControl::GetStateString() {
 		return "Fired";
 	case Retracting:
 		return "Retracting";
-
+	case Home:
+		return "Home";
 	default:
 		return "";
 
