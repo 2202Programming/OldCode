@@ -32,6 +32,7 @@ private:
 	double passRampProfile(double timeChange);
 	double trussRampProfile(double timeChange);
 	double loadRampProfile(double timeChange);
+	bool canIFire();
 	PneumaticsControl *pneumaticsControl;
 	float accelerateMotor(float stickValue, float MotorValue, float loopTime);
 	float accelerateTurnMotor(float stickValue, float MotorValue,
@@ -64,7 +65,6 @@ private:
 		AutoInit, AutoReady, AutoFire
 	};
 	autoFireStates autoFireState;
-	bool canIFire();
 	fireStates fireState;
 	bool loadingBall;
 	DigitalInput *lowerLimit;
