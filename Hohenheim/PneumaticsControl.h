@@ -21,7 +21,6 @@ public:
 	void shiftDown();
 	bool isHighGear();
 	bool ballGrabberIsExtended();
-	void piston();
 	void disable();
 	void ballGrabberExtend();
 	void ballGrabberRetract();

@@ -11,6 +11,7 @@
 #include "ShooterControl.h"
 
 #define AUTODRIVETIME .5
+#define AUTODRIVEDISTANCE 60.0
 
 class Hohenheim: public SimpleRobot {
 
@@ -19,6 +20,7 @@ class Hohenheim: public SimpleRobot {
 	DriveControl driveControl;
 	PneumaticsControl *pneumaticsControl;
 	ShooterControl *shooterControl;
+	bool autoShot;
 
 public:
 	Hohenheim(void) {
@@ -29,6 +31,7 @@ public:
 		dsLCD->Clear();
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 3.0");
 		dsLCD->UpdateLCD();
+		autoShot = false; //true if autoShoot called in autonmous
 		GetWatchdog().SetEnabled(false);
 
 	}
@@ -42,16 +45,18 @@ public:
 			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "%f, %i",
 					driverStation->GetAnalogIn(1), i);
 			dsLCD->UpdateLCD();
-
 		}
 	}
 
 	void Autonomous(void) {
-		ShootThenDriveAuto(); //Auto Mode to shoot then move foward
+		//ShootThenDriveAuto(); //Auto Mode to shoot then move foward
 		//DriveAuto(); 		  		//Auto Mode to move foward 
 		//AimShootThenDriveAuto();  //Auto Mode to aim shoot then move foward
+		DriveThenShootAuto();
 
 	}
+	
+	/*
 	void DriveAuto() {
 		pneumaticsControl->initialize();
 		Timer driveTime;
@@ -72,8 +77,26 @@ public:
 			}
 		
 		}
-	}
+	}*/
 
+	void DriveThenShootAuto() {
+		pneumaticsControl->initialize();
+		shooterControl->initializeAuto();
+		driveControl.initialize();
+		while (IsAutonomous() && IsEnabled()) {
+			GetWatchdog().Feed();
+			pneumaticsControl->ballGrabberExtend();
+			bool atDestination = driveControl.autoDrive(AUTODRIVEDISTANCE); //autoDrive returns true when 
+			if(atDestination){
+				if(pneumaticsControl->ballGrabberIsExtended() && !autoShot){
+					shooterControl->autoShoot();
+					autoShot = true;
+				}
+			}
+		}
+	}
+	
+	/*
 	void ShootThenDriveAuto() {
 		pneumaticsControl->initialize();
 		shooterControl->initializeAuto();
@@ -85,14 +108,9 @@ public:
 		bool driveNow = false;
 		Timer shootWaitTime;
 		bool shootIsOn = false;
-
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
-			if (!pneumaticsControl->ballGrabberIsExtended()) {
-				shooterControl->autoLoad(true);
-			}
 			pneumaticsControl->ballGrabberExtend();
-
 			if (shooterControl->doneAutoFire()) {
 				driveTime.Start();
 				if (driveTime.Get() < waitTime) {
@@ -103,7 +121,6 @@ public:
 				}
 			} else {
 				if (pneumaticsControl->ballGrabberIsExtended()) {
-					shooterControl->autoLoad(false);
 					if (!shootIsOn) {
 						shootWaitTime.Start();
 						shootIsOn = true;
@@ -118,12 +135,11 @@ public:
 			driveControl.autoDrive(driveNow);
 
 		}
-	}
+	}*/
 
 	void OperatorControl(void) {
 		GetWatchdog().SetEnabled(true);
 		dsLCD->Clear();
-		//dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Operator control");
 		dsLCD->UpdateLCD();
 		driveControl.initialize();
 		pneumaticsControl->initialize();
@@ -131,7 +147,6 @@ public:
 		while (IsOperatorControl() && IsEnabled()) {
 			GetWatchdog().Feed();
 			driveControl.run();
-			//pneumaticsControl->run();
 			shooterControl->run();
 			dsLCD->UpdateLCD();
 			Wait(0.005); // wait for a motor update time

@@ -6,9 +6,22 @@
  */
 #include "PneumaticsControl.h"
 
+//L-Left R-Right S-Shift G(BG)-BallGrabber 
+
 #define RETRACTTIME 1.0
 #define SHIFTHIGH 10.0
 #define SHIFTLOW 8.0
+#define SOLENOIDCOMPONENT 2
+#define LS_A 7
+#define LS_B 8
+#define LG_A 3
+#define LG_B 4
+#define RS_A 2 
+#define RS_B 1
+#define RG_A 5
+#define RG_B 6
+#define BGLIMITSWITCH 4
+
 
 static PneumaticsControl *pneumaticsControl = NULL;
 PneumaticsControl *PneumaticsControl::getInstance() {
@@ -23,11 +36,11 @@ PneumaticsControl::PneumaticsControl() {
 	xbox = XboxController::getInstance();
 	dsLCD = DriverStationLCD::GetInstance();
 	compressor = new Compressor(5, 4);
-	shiftControlL = new DoubleSolenoid(2, 7, 8);
-	shiftControlR = new DoubleSolenoid(2, 2, 1);
-	ballGrabberControlR = new DoubleSolenoid(2, 5, 6);
-	ballGrabberControlL = new DoubleSolenoid(2, 3, 4);
-	ballGrabberExtendLimit = new DigitalInput(4);
+	shiftControlL = new DoubleSolenoid(SOLENOIDCOMPONENT,LS_A , LS_B );
+	shiftControlR = new DoubleSolenoid(SOLENOIDCOMPONENT,RS_A , RS_B);
+	ballGrabberControlR = new DoubleSolenoid(SOLENOIDCOMPONENT, RG_A, RG_B);
+	ballGrabberControlL = new DoubleSolenoid(SOLENOIDCOMPONENT, LG_A, LG_B);
+	ballGrabberExtendLimit = new DigitalInput(BGLIMITSWITCH);
 	shiftState = false;
 	highGear = false; //true if gear is in high
 	isBallGrabberExtended = false; //true if piston is extended
@@ -57,22 +70,9 @@ void PneumaticsControl::ballGrabberRetract() {
 	ballGrabberControlL->Set(DoubleSolenoid::kForward);
 }
 
-void PneumaticsControl::piston() {
-	bool isAPress = xbox->isAPressed();
-	if (isAPress) {
-		if (isBallGrabberExtended) {
-			ballGrabberRetract();
-		} else {
-			ballGrabberExtend();
-		}
-	}
-}
-
 bool PneumaticsControl::isHighGear() {
 	return highGear;
 }
-
-
 
 void PneumaticsControl::shiftUp() {
 	highGear = true;
@@ -89,7 +89,6 @@ void PneumaticsControl::shiftDown() {
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "Low Gear");
 	dsLCD->UpdateLCD();
 }
-
 
 void PneumaticsControl::disable() {
 	compressor->Stop();
