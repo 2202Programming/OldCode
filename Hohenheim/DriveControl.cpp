@@ -24,6 +24,9 @@
 #define DRIVESPEED 0.4
 #define STOPPEDSPEED 0.0
 #define SPEEDCONTROL 1.5
+#define DEADZONE 0.1
+#define FRICTION 0.2
+#define INITIAL 0.0
 #define RIGHTENCODER_A 12
 #define RIGHTENCODER_B 11
 #define LEFTENCODER_A 14
@@ -56,44 +59,53 @@ void DriveControl::initialize() {
 bool DriveControl::autoDrive(double autoDriveDistance) {
 	double leftDistance = leftEncoder->GetDistance();
 	double rightDistance = rightEncoder->GetDistance();
+	double DriveCurve = DRIVECURVE;
+	if(rightDistance > leftDistance + 20){
+		DriveCurve = DRIVECURVE - 0.1;
+	}else if(leftDistance > rightDistance + 20){
+		DriveCurve = DRIVECURVE + 0.1;
+	} else{
+		DriveCurve = DRIVECURVE;
+	}
 	double averageDistance = abs((leftDistance + rightDistance) / 2.0);
 	if (averageDistance < autoDriveDistance) {
-		myRobot.Drive(DRIVESPEED, DRIVECURVE);
+		myRobot.Drive(DRIVESPEED, DriveCurve);
 		return false;
-	} else {
+	} else{
 		myRobot.Drive(STOPPEDSPEED, STOPPEDSPEED);
 		return true;
 	}
 }
 
 /*
- * Runs Arcade Drive with AutoShift With Manual Shifting Using LBumper and RBumper
+ * Runs Arcade Drive
  */
 void DriveControl::runArcadeDrive() {
 	// friction value is added as a constant to motor to make it more responsive to joystick at lower value
-	float moveValue = 0.0;
-	float rotateValue = 0.0;
-	float frictionValue = 0.0;
-	float rotateFriction = 0.0;
+	float moveValue = INITIAL;
+	float rotateValue = INITIAL;
+	float frictionValue = INITIAL;
+	float rotateFriction = INITIAL;
 	float SpeedControl = SPEEDCONTROL;
 	moveValue = xbox->getAxisLeftY();
 	rotateValue = xbox->getAxisLeftX();
 
 	// if move value is above the dead zone set friction value to .2
-	if (moveValue > .1) {
-		frictionValue = 0.2;
-	} else if (moveValue < -.1) {
-		frictionValue = -.2;
+	if (moveValue > DEADZONE) {
+		frictionValue = FRICTION;
+	} else if (moveValue < -DEADZONE) {
+		frictionValue = -FRICTION;
 	}
-	if (rotateValue > .1) {
-		rotateFriction = 0.2;
-	} else if (rotateValue < -.1) {
-		rotateFriction = -.2;
+	if (rotateValue > DEADZONE) {
+		rotateFriction = FRICTION;
+	} else if (rotateValue < -DEADZONE) {
+		rotateFriction = -FRICTION;
 	}
+	
 
 	myRobot.ArcadeDrive(((moveValue + frictionValue) / SpeedControl),
 			((-1.0) * ((rotateValue + rotateFriction) / SpeedControl)));
-//	myRobot.ArcadeDrive(((moveValue + frictionValue) / SpeedControl), ((rotateValue + rotateFriction) / SpeedControl));
+	//"Backwards" turning //myRobot.ArcadeDrive(((moveValue + frictionValue) / SpeedControl), ((rotateValue + rotateFriction) / SpeedControl));
 	dsLCD->UpdateLCD();
 }
 

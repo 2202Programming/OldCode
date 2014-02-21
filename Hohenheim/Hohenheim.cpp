@@ -90,7 +90,9 @@ public:
 			if(atDestination){
 				if(pneumaticsControl->ballGrabberIsExtended() && !autoShot){
 					shooterControl->autoShoot();
+					if(shooterControl->doneAutoFire()){
 					autoShot = true;
+					}
 				}
 			}
 		}
