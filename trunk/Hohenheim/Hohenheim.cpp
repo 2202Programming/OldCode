@@ -29,12 +29,12 @@ public:
 		pneumaticsControl = PneumaticsControl::getInstance();
 		shooterControl = ShooterControl::getInstance();
 		dsLCD->Clear();
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 3.0");
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 3.1");
 		dsLCD->UpdateLCD();
 		autoShot = false; //true if autoShoot called in autonmous
 		GetWatchdog().SetEnabled(false);
 
-	}
+	} 
 
 	void DashBoardInput() {
 		int i = 0;
@@ -81,20 +81,24 @@ public:
 
 	void DriveThenShootAuto() {
 		pneumaticsControl->initialize();
-		shooterControl->initializeAuto();
-		driveControl.initialize();
+		//shooterControl->initializeAuto();
+		driveControl.initializeAuto();
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
 			pneumaticsControl->ballGrabberExtend();
-			bool atDestination = driveControl.autoDrive(AUTODRIVEDISTANCE); //autoDrive returns true when 
+			bool atDestination = driveControl.autoPIDDrive(); //autoDrive returns true when 
 			if(atDestination){
-				if(pneumaticsControl->ballGrabberIsExtended() && !autoShot){
-					shooterControl->autoShoot();
-					if(shooterControl->doneAutoFire()){
-					autoShot = true;
-					}
-				}
+//				if(pneumaticsControl->ballGrabberIsExtended() && !autoShot){
+//					shooterControl->autoShoot();
+//					if(shooterControl->doneAutoFire()){
+//					autoShot = true;
+//					}
+//				}
+//				else {
+					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Auto Finish");
+//				}
 			}
+			
 		}
 	}
 	

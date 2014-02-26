@@ -8,12 +8,14 @@ public:
 	virtual ~PIDControlSubClass(){
 	}
 	PIDControlSubClass(PIDOutput*, PIDOutput*, PIDOutput*, PIDOutput*);
+	PIDControlSubClass(PIDOutput*, PIDOutput*);
 	void PIDWrite (float output);
 private:
 PIDOutput* motor1;
 PIDOutput* motor2;
 PIDOutput* motor3;
 PIDOutput* motor4;
+bool hasTwoMotors;
 
 };
 #endif
