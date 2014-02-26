@@ -5,17 +5,20 @@
 #include <cmath>
 #include "XboxController.h"
 #include "PneumaticsControl.h"
+#include "PIDControlSubClass.h"
 
 class DriveControl {
 public:
 	DriveControl();
 	void initialize();
+	void initializeAuto();
 	bool autoDrive(double autoDriveDistance);
 	void run();
-
+	bool autoPIDDrive();
+	char*DriveControl::GetAutoStateString();
 private:
 	PneumaticsControl *pneumaticsControl;
-	RobotDrive myRobot; 
+	RobotDrive *myRobot;
 	XboxController *xbox;
 	DriverStationLCD *dsLCD;
 	Encoder *leftEncoder;
@@ -30,6 +33,20 @@ private:
 	 */
 	void runArcadeDrive();
 	void manualShift();
-
+	Talon * motorFrontLeft;
+	Talon * motorBackLeft;
+	Talon * motorFrontRight;
+	Talon * motorBackRight;
+	PIDControlSubClass* pIDControlOutputLeft;
+	PIDController* controllerLeft;
+	PIDControlSubClass* pIDControlOutputRight;
+	PIDController* controllerRight;
+	Timer autoTimer;
+	double previousAutoTime;
+	enum AutoState {
+			AutoDrive, AutoStopped
+	};
+	AutoState currentAutoState;
+	double autoDriveRampProfile(double timeChange);
 };
 #endif

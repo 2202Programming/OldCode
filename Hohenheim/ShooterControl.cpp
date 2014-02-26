@@ -297,6 +297,7 @@ void ShooterControl::ballGrabber() {
 	case Firing:
 	case ReadyToFire:
 		pneumaticsControl->ballGrabberExtend();
+		ballGrabberOutput = -BALLMOTOR5SPEED;
 		break;
 	case Passing:
 		pneumaticsControl->ballGrabberRetract();
