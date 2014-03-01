@@ -128,9 +128,9 @@ void ShooterControl::autoShoot() {
 	int count = shooterEncoder->Get();
 	if (!doneAutoFired) {
 		switch (autoFireState) {
-		case AutoInit:
+		case AutoInit:	
 			if (isLowerLimit) {
-				// Set Home Position
+				// Set Home Position and switches states to autoready, starts shooterTimer
 				pIDControlOutput->PIDWrite(STOPPEDSPEED);
 				shooterEncoder->Reset();
 				controller->Enable();
@@ -150,12 +150,12 @@ void ShooterControl::autoShoot() {
 					+ PIDTOLERANCE)) {
 				controller->SetSetpoint(READYTOFIRE);
 				cummulativeTime += timeChange;
-				if (cummulativeTime >= 2.5) {
+				if (cummulativeTime >= 2.5) { //waits 2.5 seconds once arm is at readyToFire
 					if (canIFire()) {
 						autoFireState = AutoFire;
 					}
 				}
-			} else {
+			} else { //Brings arm up to ready to fire position
 //				cummulativeTime = 0.0;
 				double positionChange = loadRampProfile(timeChange);
 				double newSetpoint = controller->GetSetpoint() + positionChange;
