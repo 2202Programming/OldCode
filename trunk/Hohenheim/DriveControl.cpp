@@ -15,10 +15,14 @@
  #define SHIFTDELAYINSECONDS 1.0
  */
 
-#define FRONTRIGHTMOTOR 1
-#define BACKRIGHTMOTOR 2
-#define FRONTLEFTMOTOR 3
-#define BACKLEFTMOTOR 4
+//#define FRONTRIGHTMOTOR 1
+//#define BACKRIGHTMOTOR 2
+//#define FRONTLEFTMOTOR 3
+//#define BACKLEFTMOTOR 4
+#define FRONTRIGHTMOTOR 4
+#define BACKRIGHTMOTOR 3
+#define FRONTLEFTMOTOR 2
+#define BACKLEFTMOTOR 1
 #define REVOLUTIONS .05026
 #define DRIVECURVE 0.1
 #define DRIVESPEED 0.4
@@ -35,11 +39,14 @@
 #define RIGHTENCODER_B 13
 #define LEFTENCODER_A 12
 #define LEFTENCODER_B 11
-#define Kp 0.00010
+#define Kp 0.010
 #define	Ki 0.0000
-#define	Kd 0.000025
-#define AUTODRIVECPS 5
-#define AUTOENDDISTANCE 1000 // less than 9000
+#define	Kd 0.0
+//#define Kp 0.0
+//#define	Ki 0.0
+//#define	Kd 0.0
+#define AUTODRIVECPS 800.0
+#define AUTOENDDISTANCE 2500 // less than 9000
 #define PIDTOLERANCE 5.0
 
 DriveControl::DriveControl() {
@@ -53,13 +60,13 @@ DriveControl::DriveControl() {
 	leftEncoder = new Encoder(LEFTENCODER_A, LEFTENCODER_B, true, Encoder::k2X);
 	this->pIDControlOutputLeft = new PIDControlSubClass(motorBackLeft,
 			motorFrontLeft);
-	this->controllerLeft = new PIDController(Kp, Ki, Kd, leftEncoder,
-			pIDControlOutputLeft);
+//	this->controllerLeft = new PIDController(Kp, Ki, Kd, leftEncoder,
+//			pIDControlOutputLeft);
 	this->pIDControlOutputRight = new PIDControlSubClass(motorBackRight,
 			motorFrontRight);
-	this->controllerRight = new PIDController(Kp, Ki, Kd, rightEncoder,
-			pIDControlOutputRight);
-	myRobot = new RobotDrive(motorFrontLeft, motorBackLeft, motorFrontRight,
+//	this->controllerRight = new PIDController(Kp, Ki, Kd, rightEncoder,
+//			pIDControlOutputRight);
+		myRobot = new RobotDrive(motorFrontLeft, motorBackLeft, motorFrontRight,
 			motorBackRight);
 	xbox = XboxController::getInstance();
 	myRobot->SetExpiration(0.1);
@@ -75,36 +82,94 @@ void DriveControl::initialize() {
 	leftEncoder->SetDistancePerPulse(REVOLUTIONS);
 	rightEncoder->SetDistancePerPulse(REVOLUTIONS);
 	pneumaticsControl->shiftUp();
-	controllerLeft->Disable();
-	controllerRight->Disable();
+//	controllerLeft->Disable();
+//	controllerRight->Disable();
 	autoTimer.Stop();
 	//shiftState = Init;
 	//shiftDelay.Reset();
 }
 
 void DriveControl::initializeAuto() {
+
 	leftEncoder->Reset();
-	leftEncoder->Start();
 	leftEncoder->SetDistancePerPulse(1);
 	leftEncoder->SetPIDSourceParameter(Encoder::kDistance);
-	controllerLeft->SetPercentTolerance(85);
-	controllerLeft->SetContinuous();
+	leftEncoder->Start();
 	rightEncoder->Reset();
-	rightEncoder->Start();
 	rightEncoder->SetDistancePerPulse(1);
+//
 	rightEncoder->SetPIDSourceParameter(Encoder::kDistance);
-	controllerRight->SetPercentTolerance(85);
-	controllerRight->SetContinuous();
+	rightEncoder->Start();
+//	controllerLeft->SetInputRange(-10000.0, 10000.0);
+//	controllerRight->SetInputRange(-10000.0, 10000.0);
+//	controllerLeft->SetOutputRange(-10000.0, 10000.0);
+//	controllerRight->SetOutputRange(-10000.0, 10000.0);
+//	controllerLeft->SetPercentTolerance(85);
+//	controllerRight->SetPercentTolerance(85);
+//	controllerRight->SetContinuous();
+//	controllerLeft->SetContinuous();
+//	controllerLeft->Reset();
+//	controllerRight->Reset();
 	autoTimer.Stop();
 	autoTimer.Reset();
 	autoTimer.Start();
 	previousAutoTime = autoTimer.Get();
-	currentAutoState = AutoDrive;
+	totalPositionChange = 0.0;
+//	currentAutoState = AutoDrive;
+//
+//	controllerLeft->Enable();
+//	controllerRight->Enable();
+//	controllerLeft->SetSetpoint(0.0);
+//	controllerRight->SetSetpoint(0.0);
+}
 
-	controllerLeft->Enable();
-	controllerRight->Enable();
-	controllerLeft->SetSetpoint(0.0);
-	controllerRight->SetSetpoint(0.0);
+/*
+ * initialize -> encoders 0
+ * 
+ * in loop0
+ * command = rampValue
+ * error = setPoint - encoderValue
+ * output = kp * error  kp only
+ * output = kp * error + ki * integratorValue * error
+ * 
+ * integratorvalue => intetegratorvalue + error * change in time
+ * 
+ * 
+ * 
+ */
+
+bool DriveControl::autoPIDDrive2() {
+	float timeChange = (float)(autoTimer.Get() - previousAutoTime);
+	previousAutoTime = autoTimer.Get();
+	int countLeft = leftEncoder->Get();
+	int countRight = rightEncoder->Get();
+	totalPositionChange = autoDriveRampProfile(timeChange) + totalPositionChange;
+	if (totalPositionChange >= AUTOENDDISTANCE) {
+		totalPositionChange = AUTOENDDISTANCE;
+	}
+	double leftError = totalPositionChange - countLeft;
+	double rightError = (-1.0 * totalPositionChange) - countRight;
+	double leftOutput = Kp * leftError;
+	double rightOutput = Kp * rightError;
+	
+	this->pIDControlOutputLeft->PIDWrite(-leftOutput);
+	this->pIDControlOutputRight->PIDWrite(-rightOutput);
+
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "LE %f, RE:%f",
+//			leftError, rightError);
+////	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "LC%i, RC%i", countLeft,
+////			countRight);
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "LM%f, RM%f",
+//			this->motorBackLeft->Get(), this->motorBackRight->Get());
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "LP%f, RP%f",
+//			leftOutput, rightOutput);
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "PC%f",
+//			totalPositionChange);
+	dsLCD->UpdateLCD();
+	if ((countLeft - countRight)/(2.0) >= AUTOENDDISTANCE) {
+		return true;
+	}
+	return false;
 }
 
 bool DriveControl::autoDrive(double autoDriveDistance) {
@@ -139,39 +204,47 @@ char*DriveControl::GetAutoStateString() {
 
 	}
 }
+
 bool DriveControl::autoPIDDrive() {
 	double timeChange = (autoTimer.Get() - previousAutoTime);
 	previousAutoTime = autoTimer.Get();
 	int countLeft = leftEncoder->Get();
 	int countRight = rightEncoder->Get();
-	int countAverage = (countLeft + countRight) / (2);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "AD: %s",
-			GetAutoStateString());
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "ELC: %i, ERC: %i",
-			countLeft, countRight);
+	double countAverage = (countLeft - countRight) / (2.0);
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "AD: %s, RAS:%f",
+//			GetAutoStateString(), autoDriveRampProfile(timeChange));
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "LC%i, RC%i", countLeft,
+//			countRight);
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "LM%f, RM%f",
+//			this->motorBackLeft->Get(), this->motorBackRight->Get());
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "LP%f, RP%f",
+//			controllerLeft->GetSetpoint(), controllerRight->GetSetpoint());
 	dsLCD->UpdateLCD();
 	switch (currentAutoState) {
 	case AutoDrive:
-		if ((countAverage > AUTOENDDISTANCE - PIDTOLERANCE)) {
-			controllerLeft->SetSetpoint(AUTOENDDISTANCE);
-			controllerRight->SetSetpoint(AUTOENDDISTANCE);
-			currentAutoState = AutoStopped;
-		} else {
-			double positionChange = autoDriveRampProfile(timeChange);
-			double newSetpointLeft = controllerLeft->GetSetpoint()
-					+ positionChange;
-			double newSetpointRight = controllerRight->GetSetpoint()
-					+ positionChange;
-			if (newSetpointLeft >= AUTOENDDISTANCE) {
-				newSetpointLeft = AUTOENDDISTANCE;
-			}
-			if (newSetpointRight >= AUTOENDDISTANCE) {
-				newSetpointRight = AUTOENDDISTANCE;
-			}
-			controllerLeft->SetSetpoint(newSetpointLeft);
-			controllerRight->SetSetpoint(newSetpointRight);
-
+		//		if ((countAverage > AUTOENDDISTANCE - PIDTOLERANCE)) {
+		//			controllerLeft->SetSetpoint(AUTOENDDISTANCE);
+		//			controllerRight->SetSetpoint(-AUTOENDDISTANCE);
+		//			currentAutoState = AutoStopped;
+		//		} else {
+		float positionChange = autoDriveRampProfile(timeChange);
+		float newSetpointLeft = controllerLeft->GetSetpoint() + positionChange;
+		float newSetpointRight = controllerRight->GetSetpoint()
+				- positionChange;
+		if (newSetpointLeft >= AUTOENDDISTANCE) {
+			newSetpointLeft = AUTOENDDISTANCE;
 		}
+		if (newSetpointRight <= -AUTOENDDISTANCE) {
+			newSetpointRight = -AUTOENDDISTANCE;
+		}
+		dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "SL%f, SR%f",
+				newSetpointLeft, newSetpointRight);
+		dsLCD->UpdateLCD();
+
+		controllerLeft->SetSetpoint(newSetpointLeft);
+		controllerRight->SetSetpoint(newSetpointRight);
+
+		//		}
 		break;
 
 	case AutoStopped:
@@ -180,9 +253,12 @@ bool DriveControl::autoPIDDrive() {
 		return true;
 
 	}
+	//	this->pIDControlOutputLeft->PIDWrite(0.2);
+	//	this->pIDControlOutputRight->PIDWrite(0.2);
+
 	return false;
 }
-double DriveControl::autoDriveRampProfile(double timeChange) {
+float DriveControl::autoDriveRampProfile(float timeChange) {
 	return (timeChange * AUTODRIVECPS);
 }
 /*

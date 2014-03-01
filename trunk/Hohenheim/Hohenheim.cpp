@@ -34,7 +34,7 @@ public:
 		autoShot = false; //true if autoShoot called in autonmous
 		GetWatchdog().SetEnabled(false);
 
-	} 
+	}
 
 	void DashBoardInput() {
 		int i = 0;
@@ -55,93 +55,106 @@ public:
 		DriveThenShootAuto();
 
 	}
-	
+
 	/*
-	void DriveAuto() {
-		pneumaticsControl->initialize();
-		Timer driveTime;
-		float waitTime = 2.0; // Time we drive the robot
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
-		dsLCD->UpdateLCD();
-		GetWatchdog().SetEnabled(true);
-		bool driveNow = false;
-		while (IsAutonomous() && IsEnabled()) {
-			GetWatchdog().Feed();
-			driveTime.Start();
-			driveControl.autoDrive(driveNow);
-			if (driveTime.Get() < waitTime) {
-				driveNow = true;
-			} else if (driveTime.Get() > waitTime) {
-				driveNow = false;
-				driveTime.Stop();
-			}
-		
-		}
-	}*/
+	 void DriveAuto() {
+	 pneumaticsControl->initialize();
+	 Timer driveTime;
+	 float waitTime = 2.0; // Time we drive the robot
+	 dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
+	 dsLCD->UpdateLCD();
+	 GetWatchdog().SetEnabled(true);
+	 bool driveNow = false;
+	 while (IsAutonomous() && IsEnabled()) {
+	 GetWatchdog().Feed();
+	 driveTime.Start();
+	 driveControl.autoDrive(driveNow);
+	 if (driveTime.Get() < waitTime) {
+	 driveNow = true;
+	 } else if (driveTime.Get() > waitTime) {
+	 driveNow = false;
+	 driveTime.Stop();
+	 }
+	 
+	 }
+	 }*/
 
 	void DriveThenShootAuto() {
 		pneumaticsControl->initialize();
-		//shooterControl->initializeAuto();
-		driveControl.initializeAuto();
-		while (IsAutonomous() && IsEnabled()) {
-			GetWatchdog().Feed();
-			pneumaticsControl->ballGrabberExtend();
-			bool atDestination = driveControl.autoPIDDrive(); //autoDrive returns true when 
-			if(atDestination){
-//				if(pneumaticsControl->ballGrabberIsExtended() && !autoShot){
-//					shooterControl->autoShoot();
-//					if(shooterControl->doneAutoFire()){
-//					autoShot = true;
-//					}
-//				}
-//				else {
-					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Auto Finish");
-//				}
-			}
-			
-		}
-	}
-	
-	/*
-	void ShootThenDriveAuto() {
-		pneumaticsControl->initialize();
 		shooterControl->initializeAuto();
-		Timer driveTime;
-		float waitTime = 2.0; // Time we drive the robot
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
-		dsLCD->UpdateLCD();
-		GetWatchdog().SetEnabled(true);
-		bool driveNow = false;
-		Timer shootWaitTime;
-		bool shootIsOn = false;
+		driveControl.initializeAuto();
+		Timer feeding;
+		bool started = false;
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
-			pneumaticsControl->ballGrabberExtend();
-			if (shooterControl->doneAutoFire()) {
-				driveTime.Start();
-				if (driveTime.Get() < waitTime) {
-					driveNow = true;
-				} else if (driveTime.Get() > waitTime) {
-					driveNow = false;
-					driveTime.Stop();
+			bool atDestination = driveControl.autoPIDDrive2(); //autoDrive returns true when 
+			if (atDestination) {
+				if (!started) {
+					started = true;
+					feeding.Start();
 				}
-			} else {
-				if (pneumaticsControl->ballGrabberIsExtended()) {
-					if (!shootIsOn) {
-						shootWaitTime.Start();
-						shootIsOn = true;
+				pneumaticsControl->ballGrabberExtend();
+				if (feeding.Get() < 3.0) {
+					shooterControl->feed(true);
+				}else{
+					shooterControl->feed(false);
+				
+				}
+
+				if (pneumaticsControl->ballGrabberIsExtended() && !autoShot) {
+					shooterControl->autoShoot();
+					if (shooterControl->doneAutoFire()) {
+						autoShot = true;
 					}
-					if (shootWaitTime.Get() > waitTime) {
-						shooterControl->autoShoot();
-						shootWaitTime.Stop();
-						shootWaitTime.Reset();
-					}
+				} else {
+					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1,
+							"Auto Finish");
 				}
 			}
-			driveControl.autoDrive(driveNow);
 
 		}
-	}*/
+	}
+
+	/*
+	 void ShootThenDriveAuto() {
+	 pneumaticsControl->initialize();
+	 shooterControl->initializeAuto();
+	 Timer driveTime;
+	 float waitTime = 2.0; // Time we drive the robot
+	 dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
+	 dsLCD->UpdateLCD();
+	 GetWatchdog().SetEnabled(true);
+	 bool driveNow = false;
+	 Timer shootWaitTime;
+	 bool shootIsOn = false;
+	 while (IsAutonomous() && IsEnabled()) {
+	 GetWatchdog().Feed();
+	 pneumaticsControl->ballGrabberExtend();
+	 if (shooterControl->doneAutoFire()) {
+	 driveTime.Start();
+	 if (driveTime.Get() < waitTime) {
+	 driveNow = true;
+	 } else if (driveTime.Get() > waitTime) {
+	 driveNow = false;
+	 driveTime.Stop();
+	 }
+	 } else {
+	 if (pneumaticsControl->ballGrabberIsExtended()) {
+	 if (!shootIsOn) {
+	 shootWaitTime.Start();
+	 shootIsOn = true;
+	 }
+	 if (shootWaitTime.Get() > waitTime) {
+	 shooterControl->autoShoot();
+	 shootWaitTime.Stop();
+	 shootWaitTime.Reset();
+	 }
+	 }
+	 }
+	 driveControl.autoDrive(driveNow);
+
+	 }
+	 }*/
 
 	void OperatorControl(void) {
 		GetWatchdog().SetEnabled(true);

@@ -21,6 +21,7 @@ public:
 	void run();
 	void autoLoad(bool on);
 	void toggleColor();
+	void feed(bool toggleMotor);
 
 	char*GetStateString();
 	char*GetAutoStateString();
@@ -79,5 +80,6 @@ private:
 	Relay *LED1;
 	Relay *LED2;
 	Relay *LED3;
+	double cummulativeTime;
 };
 #endif
