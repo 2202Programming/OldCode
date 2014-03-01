@@ -8,12 +8,12 @@ PIDControlSubClass::PIDControlSubClass(PIDOutput* motorIn1,
 	motor4 = motorIn4;
 	hasTwoMotors = false;
 }
-void PIDControlSubClass::PIDWrite(float output) {
-	motor1->PIDWrite(output);
-	motor2->PIDWrite(output);
+void PIDControlSubClass::PIDWrite(float write) {
+	motor1->PIDWrite(write);
+	motor2->PIDWrite(write);
 	if (!hasTwoMotors) {
-		motor3->PIDWrite(output);
-		motor4->PIDWrite(output);
+		motor3->PIDWrite(write);
+		motor4->PIDWrite(write);
 
 	}
 }
@@ -23,3 +23,10 @@ PIDControlSubClass::PIDControlSubClass(PIDOutput* motorIn1, PIDOutput* motorIn2)
 	hasTwoMotors = true;
 
 }
+//PIDControlSubClass::PIDControlSubClass(PIDOutput* motorIn1,
+//		PIDOutput* motorIn2, bool invertOutput) {
+//	this->invertOutput = invertOutput;
+//	motor1 = motorIn1;
+//	motor2 = motorIn2;
+//	hasTwoMotors = true;
+//}

@@ -8,8 +8,8 @@
 //Defined Constants
 #define BALLGRABBERMOTOR5 5
 #define BALLGRABBERMOTOR6 6
-#define BALLMOTOR5SPEED -0.3
-#define BALLMOTOR6SPEED -0.3
+#define BALLMOTOR5SPEED -0.5
+#define BALLMOTOR6SPEED -0.5
 #define UPPERSHOOTER 7
 #define LOWERSHOOTER 8
 #define UPPERSHOOTER2 9
@@ -24,19 +24,19 @@
 #define RIGHT 5000
 #define HOME 5
 #define ARMING 0
-#define READYTOFIRE 60 // 90
-#define FIRE 290 * 1.05
+#define READYTOFIRE 30 // 90
+#define FIRE 260
 #define TRUSS 250
 #define PASS 200 
 #define PIDTOLERANCE 5.0
-#define RETRACTCPS  150.0 //for down ramp profile
-#define SHOOTCPS 2000.0 //for the shoot ramp
+#define RETRACTCPS  175.0 //for down ramp profile
+#define SHOOTCPS 750.0 //for the shoot ramp
 #define PASSCPS 200.0 //rate of the passing ramp
 #define TRUSSCPS 1300.0 //rate of the truss throw ramp 
 #define LOADCPS 100.0
-#define Kp 0.010
-#define	Ki 0.00024
-#define	Kd 0.005
+#define Kp 0.012
+#define	Ki 0.00075
+#define	Kd 0.006
 
 static ShooterControl *shootercontrol = NULL;
 ShooterControl *ShooterControl::getInstance() {
@@ -106,6 +106,7 @@ void ShooterControl::initializeAuto() {
 	autoFireState = AutoInit;
 	doneAutoFired = false;
 	previousTime = 0.0;
+	cummulativeTime = 0.0;
 }
 
 void ShooterControl::autoLoad(bool on) {
@@ -129,25 +130,33 @@ void ShooterControl::autoShoot() {
 		switch (autoFireState) {
 		case AutoInit:
 			if (isLowerLimit) {
+				// Set Home Position
 				pIDControlOutput->PIDWrite(STOPPEDSPEED);
 				shooterEncoder->Reset();
 				controller->Enable();
 				controller->SetSetpoint(HOME);
 				autoFireState = AutoReady;
 				shooterTimer.Start();
+				cummulativeTime = 0.0;
 			} else {
 				if (canIFire()) {
+					// Drop Down the Arm If Loader is extended
 					pIDControlOutput->PIDWrite(ARMINGSPEED);
 				}
 			}
 			break;
 		case AutoReady:
-			if ((count > READYTOFIRE - PIDTOLERANCE) && (count < READYTOFIRE + PIDTOLERANCE)) {
+			if ((count > READYTOFIRE - PIDTOLERANCE) && (count < READYTOFIRE
+					+ PIDTOLERANCE)) {
 				controller->SetSetpoint(READYTOFIRE);
-				if (canIFire()) {
-					autoFireState = AutoFire;
+				cummulativeTime += timeChange;
+				if (cummulativeTime >= 2.5) {
+					if (canIFire()) {
+						autoFireState = AutoFire;
+					}
 				}
 			} else {
+//				cummulativeTime = 0.0;
 				double positionChange = loadRampProfile(timeChange);
 				double newSetpoint = controller->GetSetpoint() + positionChange;
 				if (newSetpoint >= READYTOFIRE) {
@@ -177,6 +186,17 @@ void ShooterControl::autoShoot() {
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "EncoderC: %i",
 			shooterEncoder->Get());
 	dsLCD->UpdateLCD();
+}
+
+void ShooterControl::feed(bool toggleMotor) {
+	if (toggleMotor) {
+		BallGrabberMotor5->Set(-BALLMOTOR5SPEED);
+		BallGrabberMotor6->Set(-BALLMOTOR6SPEED);
+	} else {
+		BallGrabberMotor5->Set(STOPPEDSPEED);
+		BallGrabberMotor6->Set(STOPPEDSPEED);
+	}
+
 }
 
 void ShooterControl::toggleColor() {
@@ -272,6 +292,7 @@ double ShooterControl::loadRampProfile(double timeChange) {
 void ShooterControl::ballGrabber() {
 	//bool aHeld = xbox->isAPressed();
 	bool bPress = xbox->isBPressed();
+	bool aHeld = xbox->isAHeld();
 	//bool yHeld = xbox->isYHeld();
 
 	if (bPress) {
@@ -288,8 +309,10 @@ void ShooterControl::ballGrabber() {
 		break;
 	case Arming:
 		pneumaticsControl->ballGrabberExtend();
-		if (pneumaticsControl->ballGrabberIsExtended()) {
+		if (pneumaticsControl->ballGrabberIsExtended() && aHeld) {
 			ballGrabberOutput = -BALLMOTOR5SPEED;
+		} else {
+			ballGrabberOutput = STOPPEDSPEED;
 		}
 		break;
 	case Retracting:
@@ -297,7 +320,12 @@ void ShooterControl::ballGrabber() {
 	case Firing:
 	case ReadyToFire:
 		pneumaticsControl->ballGrabberExtend();
-		ballGrabberOutput = -BALLMOTOR5SPEED;
+		if (pneumaticsControl->ballGrabberIsExtended() && aHeld) {
+			ballGrabberOutput = -BALLMOTOR5SPEED;
+		} else {
+			ballGrabberOutput = STOPPEDSPEED;
+		}
+
 		break;
 	case Passing:
 		pneumaticsControl->ballGrabberRetract();
@@ -310,8 +338,8 @@ void ShooterControl::ballGrabber() {
 
 	BallGrabberMotor5->Set(ballGrabberOutput);
 	BallGrabberMotor6->Set(ballGrabberOutput);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "BG: %i ",
-			pneumaticsControl->ballGrabberIsExtended());
+//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "BG: %i ",
+//			pneumaticsControl->ballGrabberIsExtended());
 	dsLCD->UpdateLCD();
 
 }

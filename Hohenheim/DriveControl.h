@@ -16,7 +16,9 @@ public:
 	void run();
 	bool autoPIDDrive();
 	char*DriveControl::GetAutoStateString();
+	bool autoPIDDrive2();
 private:
+	float totalPositionChange;
 	PneumaticsControl *pneumaticsControl;
 	RobotDrive *myRobot;
 	XboxController *xbox;
@@ -47,6 +49,6 @@ private:
 			AutoDrive, AutoStopped
 	};
 	AutoState currentAutoState;
-	double autoDriveRampProfile(double timeChange);
+	float autoDriveRampProfile(float timeChange);
 };
 #endif
