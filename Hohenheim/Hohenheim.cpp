@@ -80,20 +80,29 @@ public:
 	 }*/
 
 	void DriveThenShootAuto() {
+		//initizlizes all parts of robot
 		pneumaticsControl->initialize();
 		shooterControl->initializeAuto();
 		driveControl.initializeAuto();
+		bool destinationPrevious = false;
+		
+		//creates a timer for the ball grabber motors
 		Timer feeding;
 		bool started = false;
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
-			bool atDestination = driveControl.autoPIDDrive2(); //autoDrive returns true when 
+			//drives forward to shooting point
+			bool atDestination = driveControl.autoPIDDrive2() || destinationPrevious; //autoDrive returns true when 
 			if (atDestination) {
-				if (!started) {
+				// The robot has reached the destination on the floor and is now ready to open and shoot
+				if (!started) { 
 					started = true;
+					destinationPrevious = true;
+					//starts feeding timer controls feeder motors so the ball doesn't get stuck
 					feeding.Start();
 				}
 				pneumaticsControl->ballGrabberExtend();
+				//waits for feeding to be done
 				if (feeding.Get() < 3.0) {
 					shooterControl->feed(true);
 				}else{
@@ -103,6 +112,7 @@ public:
 
 				if (pneumaticsControl->ballGrabberIsExtended() && !autoShot) {
 					shooterControl->autoShoot();
+					dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "In autoshoot if");
 					if (shooterControl->doneAutoFire()) {
 						autoShot = true;
 					}
@@ -111,8 +121,9 @@ public:
 							"Auto Finish");
 				}
 			}
-
+			dsLCD->UpdateLCD();
 		}
+	
 	}
 
 	/*
