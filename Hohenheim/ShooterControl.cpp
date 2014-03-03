@@ -130,7 +130,7 @@ void ShooterControl::autoShoot() {
 		switch (autoFireState) {
 		case AutoInit:	
 			if (isLowerLimit) {
-				// Set Home Position and switches states to autoready, starts shooterTimer
+				//Set Home Position and switches states to autoready, starts shooterTimer
 				pIDControlOutput->PIDWrite(STOPPEDSPEED);
 				shooterEncoder->Reset();
 				controller->Enable();

@@ -20,7 +20,6 @@ class Hohenheim: public SimpleRobot {
 	DriveControl driveControl;
 	PneumaticsControl *pneumaticsControl;
 	ShooterControl *shooterControl;
-	bool autoShot;
 
 public:
 	Hohenheim(void) {
@@ -31,9 +30,7 @@ public:
 		dsLCD->Clear();
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Hohenheim 2014 V 3.1");
 		dsLCD->UpdateLCD();
-		autoShot = false; //true if autoShoot called in autonmous
 		GetWatchdog().SetEnabled(false);
-
 	}
 
 	void DashBoardInput() {
@@ -42,130 +39,66 @@ public:
 		while (IsAutonomous() && IsEnabled()) {
 			i++;
 			GetWatchdog().Feed();
-			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "%f, %i",
-					driverStation->GetAnalogIn(1), i);
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "%f, %i", driverStation->GetAnalogIn(1), i);
 			dsLCD->UpdateLCD();
 		}
 	}
 
 	void Autonomous(void) {
-		//ShootThenDriveAuto(); //Auto Mode to shoot then move foward
-		//DriveAuto(); 		  		//Auto Mode to move foward 
-		//AimShootThenDriveAuto();  //Auto Mode to aim shoot then move foward
 		DriveThenShootAuto();
 
 	}
-
-	/*
-	 void DriveAuto() {
-	 pneumaticsControl->initialize();
-	 Timer driveTime;
-	 float waitTime = 2.0; // Time we drive the robot
-	 dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
-	 dsLCD->UpdateLCD();
-	 GetWatchdog().SetEnabled(true);
-	 bool driveNow = false;
-	 while (IsAutonomous() && IsEnabled()) {
-	 GetWatchdog().Feed();
-	 driveTime.Start();
-	 driveControl.autoDrive(driveNow);
-	 if (driveTime.Get() < waitTime) {
-	 driveNow = true;
-	 } else if (driveTime.Get() > waitTime) {
-	 driveNow = false;
-	 driveTime.Stop();
-	 }
-	 
-	 }
-	 }*/
-
+	
 	void DriveThenShootAuto() {
 		//initizlizes all parts of robot
 		pneumaticsControl->initialize();
 		shooterControl->initializeAuto();
 		driveControl.initializeAuto();
 		bool destinationPrevious = false;
-		
+		bool autoShot = false; //true if autoShoot
+
 		//creates a timer for the ball grabber motors
 		Timer feeding;
 		bool started = false;
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
 			//drives forward to shooting point
-			bool atDestination = driveControl.autoPIDDrive2() || destinationPrevious; //autoDrive returns true when 
+			bool atDestination = destinationPrevious || driveControl.autoPIDDrive2(); //autoDrive returns true when robot reached it's goal
 			if (atDestination) {
 				// The robot has reached the destination on the floor and is now ready to open and shoot
 				if (!started) { 
 					started = true;
 					destinationPrevious = true;
-					//starts feeding timer controls feeder motors so the ball doesn't get stuck
+					//starts feeding-timer controls feeder motors so the ball doesn't get stuck
 					feeding.Start();
 				}
+				
 				pneumaticsControl->ballGrabberExtend();
 				//waits for feeding to be done
 				if (feeding.Get() < 3.0) {
 					shooterControl->feed(true);
-				}else{
+				}else if(feeding.Get() >= 3.0){
 					shooterControl->feed(false);
-				
+					feeding.Stop();
 				}
+				
 
 				if (pneumaticsControl->ballGrabberIsExtended() && !autoShot) {
 					shooterControl->autoShoot();
-					dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "In autoshoot if");
-					if (shooterControl->doneAutoFire()) {
+					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "The robot is(should be) shooting");
+					if (shooterControl->doneAutoFire()) {//works only after shoot is done firing
 						autoShot = true;
 					}
-				} else {
-					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1,
-							"Auto Finish");
+				} else if(autoShot){//runs only after shoot is done
+					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "AutoMode Finished");
 				}
+				
 			}
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2,"Feeder Time: %f" , feeding.Get());
 			dsLCD->UpdateLCD();
 		}
 	
 	}
-
-	/*
-	 void ShootThenDriveAuto() {
-	 pneumaticsControl->initialize();
-	 shooterControl->initializeAuto();
-	 Timer driveTime;
-	 float waitTime = 2.0; // Time we drive the robot
-	 dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "Autonomous control");
-	 dsLCD->UpdateLCD();
-	 GetWatchdog().SetEnabled(true);
-	 bool driveNow = false;
-	 Timer shootWaitTime;
-	 bool shootIsOn = false;
-	 while (IsAutonomous() && IsEnabled()) {
-	 GetWatchdog().Feed();
-	 pneumaticsControl->ballGrabberExtend();
-	 if (shooterControl->doneAutoFire()) {
-	 driveTime.Start();
-	 if (driveTime.Get() < waitTime) {
-	 driveNow = true;
-	 } else if (driveTime.Get() > waitTime) {
-	 driveNow = false;
-	 driveTime.Stop();
-	 }
-	 } else {
-	 if (pneumaticsControl->ballGrabberIsExtended()) {
-	 if (!shootIsOn) {
-	 shootWaitTime.Start();
-	 shootIsOn = true;
-	 }
-	 if (shootWaitTime.Get() > waitTime) {
-	 shooterControl->autoShoot();
-	 shootWaitTime.Stop();
-	 shootWaitTime.Reset();
-	 }
-	 }
-	 }
-	 driveControl.autoDrive(driveNow);
-
-	 }
-	 }*/
 
 	void OperatorControl(void) {
 		GetWatchdog().SetEnabled(true);
@@ -184,6 +117,7 @@ public:
 		pneumaticsControl->disable();
 	}
 
+	
 };
 
 START_ROBOT_CLASS(Hohenheim)
