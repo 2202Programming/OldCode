@@ -39,16 +39,78 @@ public:
 		while (IsAutonomous() && IsEnabled()) {
 			i++;
 			GetWatchdog().Feed();
-			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "%f, %i", driverStation->GetAnalogIn(1), i);
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "%f, %i",
+					driverStation->GetAnalogIn(1), i);
 			dsLCD->UpdateLCD();
 		}
 	}
 
 	void Autonomous(void) {
 		DriveThenShootAuto();
+		//AutonomousStateMachine();
 
 	}
-	
+
+	void AutonomousStateMachine() {
+		pneumaticsControl->initialize();
+		shooterControl->initializeAuto();
+		driveControl.initializeAuto();
+		enum AutoState {
+			AutoDrive, AutoSetup, AutoShoot
+		};
+		AutoState autoState;
+		autoState = AutoDrive;
+
+		bool feederState = false;
+		bool hasFired = false;
+		Timer feeder;
+		
+		while (IsAutonomous() && IsEnabled()) {
+			GetWatchdog().Feed();
+			switch (autoState) {//Start of Case Machine
+			case AutoDrive://Drives the robot to set Destination 
+				bool atDestination = driveControl.autoPIDDrive2();
+				if (atDestination) {//If at Destination, Transition to Shooting Setup
+					autoState = AutoSetup;
+				}
+				break;
+			case AutoSetup://Starts the ballgrabber motors to place the ball and extends ballgrabber
+				if (!pneumaticsControl->ballGrabberIsExtended()) {//extends ballgrabber if not already extended
+					pneumaticsControl->ballGrabberExtend();
+				}
+
+				if (!feederState) {//Started the feeder timer once
+					feederState = true;
+					feeder.Start();
+				}
+
+				if (feeder.Get() < 2.0) {//Runs ballgrabber for 2.0 Seconds at most
+					shooterControl->feed(true);
+				} else if (feeder.Get() >= 2.0) {//Transition to Shooting
+					shooterControl->feed(false);
+					feeder.Stop();
+					autoState = AutoShoot;
+				}
+
+				break;
+			case AutoShoot://Shoots the ball
+				if (pneumaticsControl->ballGrabberIsExtended() && !hasFired) {
+					shooterControl->autoShoot();
+					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1,
+							"The robot is(should be) shooting");
+					if (shooterControl->doneAutoFire()) {//Returns true only after shoot is done firing
+						hasFired = true;
+					}
+				} else if (hasFired) {//runs only after shoot is done
+					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1,
+							"AutoMode Finished");
+				}
+				break;
+			}
+
+		}
+	}
+
 	void DriveThenShootAuto() {
 		//initizlizes all parts of robot
 		pneumaticsControl->initialize();
@@ -63,41 +125,44 @@ public:
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
 			//drives forward to shooting point
-			bool atDestination = destinationPrevious || driveControl.autoPIDDrive2(); //autoDrive returns true when robot reached it's goal
+			bool atDestination = destinationPrevious
+					|| driveControl.autoPIDDrive2(); //autoDrive returns true when robot reached it's goal
 			if (atDestination) {
 				// The robot has reached the destination on the floor and is now ready to open and shoot
-				if (!started) { 
+				if (!started) {
 					started = true;
 					destinationPrevious = true;
 					//starts feeding-timer controls feeder motors so the ball doesn't get stuck
 					feeding.Start();
 				}
-				
+
 				pneumaticsControl->ballGrabberExtend();
 				//waits for feeding to be done
 				if (feeding.Get() < 3.0) {
 					shooterControl->feed(true);
-				}else if(feeding.Get() >= 3.0){
+				} else if (feeding.Get() >= 3.0) {
 					shooterControl->feed(false);
 					feeding.Stop();
 				}
-				
 
 				if (pneumaticsControl->ballGrabberIsExtended() && !autoShot) {
 					shooterControl->autoShoot();
-					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "The robot is(should be) shooting");
+					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1,
+							"The robot is(should be) shooting");
 					if (shooterControl->doneAutoFire()) {//works only after shoot is done firing
 						autoShot = true;
 					}
-				} else if(autoShot){//runs only after shoot is done
-					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "AutoMode Finished");
+				} else if (autoShot) {//runs only after shoot is done
+					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1,
+							"AutoMode Finished");
 				}
-				
+
 			}
-			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2,"Feeder Time: %f" , feeding.Get());
+			dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "Feeder Time: %f",
+					feeding.Get());
 			dsLCD->UpdateLCD();
 		}
-	
+
 	}
 
 	void OperatorControl(void) {
@@ -117,7 +182,6 @@ public:
 		pneumaticsControl->disable();
 	}
 
-	
 };
 
 START_ROBOT_CLASS(Hohenheim)
