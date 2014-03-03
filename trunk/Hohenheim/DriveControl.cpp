@@ -90,14 +90,12 @@ void DriveControl::initialize() {
 }
 
 void DriveControl::initializeAuto() {
-
 	leftEncoder->Reset();
 	leftEncoder->SetDistancePerPulse(1);
 	leftEncoder->SetPIDSourceParameter(Encoder::kDistance);
 	leftEncoder->Start();
 	rightEncoder->Reset();
 	rightEncoder->SetDistancePerPulse(1);
-//
 	rightEncoder->SetPIDSourceParameter(Encoder::kDistance);
 	rightEncoder->Start();
 //	controllerLeft->SetInputRange(-10000.0, 10000.0);
