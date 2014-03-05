@@ -63,7 +63,7 @@ private:
 		Arming, ReadyToFire, Firing, Init, Fired, Retracting, Home, Passing, TrussShot
 	};
 	enum autoFireStates {
-		AutoInit, AutoReady, AutoFire
+		AutoInit, GoHome, AutoWait, AutoFire , AutoRetract
 	};
 	autoFireStates autoFireState;
 	fireStates fireState;

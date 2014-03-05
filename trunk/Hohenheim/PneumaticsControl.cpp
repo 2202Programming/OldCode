@@ -54,6 +54,14 @@ void PneumaticsControl::initialize() {
 	this->ballGrabberRetract();
 }
 
+void PneumaticsControl::compressorEnable(){
+	compressor->Start();
+}
+
+void PneumaticsControl::compressorDisable(){
+	compressor->Stop();
+}
+
 bool PneumaticsControl::ballGrabberIsExtended() {
 	return isBallGrabberExtended && (ballGrabberExtendLimit->Get() == 0);
 }

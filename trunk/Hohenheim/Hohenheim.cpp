@@ -64,7 +64,7 @@ public:
 		bool feederState = false;
 		bool hasFired = false;
 		Timer feeder;
-		
+
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
 			switch (autoState) {//Start of Case Machine
@@ -82,18 +82,18 @@ public:
 				if (!feederState) {//Started the feeder timer once
 					feederState = true;
 					feeder.Start();
-				}
-
-				if (feeder.Get() < 2.0) {//Runs ballgrabber for 2.0 Seconds at most
-					shooterControl->feed(true);
-				} else if (feeder.Get() >= 2.0) {//Transition to Shooting
-					shooterControl->feed(false);
-					feeder.Stop();
 					autoState = AutoShoot;
 				}
 
 				break;
 			case AutoShoot://Shoots the ball
+				if (feeder.Get() < 2.0) {//Runs ballgrabber for 2.0 Seconds at most
+					shooterControl->feed(true);
+				} else if (feeder.Get() >= 2.0) {//Transition to Shooting
+					shooterControl->feed(false);
+					feeder.Stop();
+				}
+				
 				if (pneumaticsControl->ballGrabberIsExtended() && !hasFired) {
 					shooterControl->autoShoot();
 					dsLCD->PrintfLine(DriverStationLCD::kUser_Line1,
@@ -107,6 +107,7 @@ public:
 				}
 				break;
 			}
+			dsLCD->UpdateLCD();
 
 		}
 	}

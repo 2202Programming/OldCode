@@ -24,6 +24,8 @@ public:
 	void disable();
 	void ballGrabberExtend();
 	void ballGrabberRetract();
+	void compressorEnable();
+	void compressorDisable();
 	void ballGrabberToggle() {
 		if (isBallGrabberExtended) {
 			ballGrabberRetract();
