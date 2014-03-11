@@ -24,7 +24,7 @@
 #define RIGHT 5000
 #define HOME 5
 #define ARMING 0
-#define READYTOFIRE 30 // 90
+#define READYTOFIRE 40 // 90 //at Terra Hote it was 30
 #define FIRE 260
 #define TRUSS 250
 #define PASS 200 
@@ -35,7 +35,7 @@
 #define TRUSSCPS 1300.0 //rate of the truss throw ramp 
 #define LOADCPS 100.0
 #define Kp 0.012
-#define	Ki 0.00075
+#define	Ki 0.0010 // 0.00075
 #define	Kd 0.006
 
 static ShooterControl *shootercontrol = NULL;
@@ -109,7 +109,7 @@ void ShooterControl::initializeAuto() {
 	cummulativeTime = 0.0;
 }
 
-void ShooterControl::autoLoad(bool on) {
+void ShooterControl::autoLoad(bool on) {//Code for Autonomous BallGrabber
 	if (on) {
 		BallGrabberMotor5->Set(-BALLMOTOR5SPEED * 0.75);
 		BallGrabberMotor6->Set(-BALLMOTOR5SPEED * 0.75);
@@ -130,8 +130,8 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 		switch (autoFireState) {
 		case AutoInit://Puts the arm down until lowerLimit is reached and resets shooterEncoder. Transitions to GoHome.
 			if (isLowerLimit) {
-				//				pIDControlOutput->PIDWrite(STOPPEDSPEED);
 				shooterEncoder->Reset();
+				//				pIDControlOutput->PIDWrite(STOPPEDSPEED);
 				//				controller->Enable();
 				//				controller->SetSetpoint(HOME);
 				//				cummulativeTime = 0.0;
@@ -206,7 +206,7 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "EncoderC: %i",
 			shooterEncoder->Get());
 	dsLCD->UpdateLCD();
-}
+} 
 
 void ShooterControl::feed(bool toggleMotor) {
 	//Used only in Autonomous, toggleMotor is true for 2.5 Seconds, then False. 
@@ -290,6 +290,13 @@ void ShooterControl::ballGrabber() {
 	switch (fireState) {
 	case Home://Home mode is defined by ballGrabber being retracted. With or without the ball
 		pneumaticsControl->ballGrabberRetract();
+		// new Code
+		if(aHeld){
+			ballGrabberOutput = - BALLMOTOR5SPEED;
+		}else{
+			ballGrabberOutput = STOPPEDSPEED;
+		}
+		// new Code 
 		break;
 	case Init:
 		pneumaticsControl->ballGrabberExtend();
