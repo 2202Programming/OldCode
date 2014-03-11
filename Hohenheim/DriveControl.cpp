@@ -27,7 +27,7 @@
 #define DRIVECURVE 0.1
 #define DRIVESPEED 0.4
 #define STOPPEDSPEED 0.0
-#define SPEEDCONTROL 1.5
+#define SPEEDCONTROL 1.0 // was 1.5 
 #define DEADZONE 0.1
 #define FRICTION 0.2
 #define INITIAL 0.0
@@ -46,7 +46,7 @@
 //#define	Ki 0.0
 //#define	Kd 0.0
 #define AUTODRIVECPS 800.0
-#define AUTOENDDISTANCE 2500 // less than 9000
+#define AUTOENDDISTANCE 2600 // less than 9000  // was 2500 originally //3000 at terra hote
 #define PIDTOLERANCE 5.0
 
 DriveControl::DriveControl() {
@@ -208,7 +208,7 @@ bool DriveControl::autoPIDDrive() {
 	previousAutoTime = autoTimer.Get();
 	int countLeft = leftEncoder->Get();
 	int countRight = rightEncoder->Get();
-	double countAverage = (countLeft - countRight) / (2.0);
+//	double countAverage = (countLeft - countRight) / (2.0);
 //	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "AD: %s, RAS:%f",
 //			GetAutoStateString(), autoDriveRampProfile(timeChange));
 //	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "LC%i, RC%i", countLeft,
@@ -284,7 +284,7 @@ void DriveControl::runArcadeDrive() {
 		rotateFriction = -FRICTION;
 	}
 
-	myRobot->ArcadeDrive(((moveValue + frictionValue) / SpeedControl),
+	myRobot->ArcadeDrive(((-1.0) * ((moveValue + frictionValue) / SpeedControl)),
 			((-1.0) * ((rotateValue + rotateFriction) / SpeedControl)));
 	//"Backwards" turning //myRobot.ArcadeDrive(((moveValue + frictionValue) / SpeedControl), ((rotateValue + rotateFriction) / SpeedControl));
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "ELC: %i, ERC: %i",
@@ -298,9 +298,9 @@ void DriveControl::manualShift() {
 	bool LeftBumperHeld = xbox->isLBumperHeld();
 	//shifts down if LeftBumper is held
 	if (LeftBumperHeld) {
-		pneumaticsControl->shiftDown();
-	} else {
 		pneumaticsControl->shiftUp();
+	} else {
+		pneumaticsControl->shiftDown();
 	}
 
 }
