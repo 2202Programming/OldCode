@@ -72,6 +72,8 @@ DriveControl::DriveControl() {
 	myRobot->SetExpiration(0.1);
 	dsLCD = DriverStationLCD::GetInstance();
 	pneumaticsControl = PneumaticsControl::getInstance();
+	SpeedControl = SPEEDCONTROL;
+
 }
 
 void DriveControl::initialize() {
@@ -268,7 +270,7 @@ void DriveControl::runArcadeDrive() {
 	float rotateValue = INITIAL;
 	float frictionValue = INITIAL;
 	float rotateFriction = INITIAL;
-	float SpeedControl = SPEEDCONTROL;
+	//SpeedControl = SPEEDCONTROL;
 	moveValue = xbox->getAxisLeftY();
 	rotateValue = xbox->getAxisLeftX();
 
@@ -294,6 +296,16 @@ void DriveControl::runArcadeDrive() {
 
 }
 
+void DriveControl::beastMode(){
+	bool isStartPressed = xbox->isStartPressed();
+	if(isStartPressed){
+		SpeedControl = 0.75;
+	}else{
+		SpeedControl = 1.00;
+	}
+}
+
+
 void DriveControl::manualShift() {
 	bool LeftBumperHeld = xbox->isLBumperHeld();
 	//shifts down if LeftBumper is held
@@ -308,6 +320,7 @@ void DriveControl::manualShift() {
 void DriveControl::run() {
 	runArcadeDrive();
 	manualShift();
+	beastMode();
 }
 
 /*

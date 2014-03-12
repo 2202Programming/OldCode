@@ -59,6 +59,7 @@ private:
 	float maxValue;
 	float counter;
 	int limitCount;
+	int maxEncoderValue;
 	enum fireStates {
 		Arming, ReadyToFire, Firing, Init, Fired, Retracting, Home, Passing, TrussShot
 	};
