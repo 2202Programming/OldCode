@@ -24,13 +24,13 @@
 #define RIGHT 5000
 #define HOME 5
 #define ARMING 0
-#define READYTOFIRE 40 // 90 //at Terra Hote it was 30
-#define FIRE 260
+#define READYTOFIRE  30 // 40 also Used at Terra Hote // 90 //at Terra Hote it was 30
+#define FIRE  225 // 200 //260 Used at Terra Hote 
 #define TRUSS 250
 #define PASS 200 
 #define PIDTOLERANCE 5.0
 #define RETRACTCPS  175.0 //for down ramp profile
-#define SHOOTCPS 750.0 //for the shoot ramp
+#define SHOOTCPS 900 //750.0  //  900.0 //750.0 rate for Regionals in indiana//for the shoot ramp
 #define PASSCPS 200.0 //rate of the passing ramp
 #define TRUSSCPS 1300.0 //rate of the truss throw ramp 
 #define LOADCPS 100.0
@@ -72,6 +72,8 @@ ShooterControl::ShooterControl() {
 	LED2 = new Relay(3, Relay::kForwardOnly);
 	LED3 = new Relay(5, Relay::kForwardOnly);
 	autoShot = false; //turns to true as soon as it is shot in autonomous
+	maxEncoderValue = 0;
+	
 }
 
 void ShooterControl::initialize() {
@@ -125,7 +127,7 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 	double timeChange = (shooterTimer.Get() - previousTime);
 	previousTime = shooterTimer.Get();
 	//int count = shooterEncoder->Get();
-	
+
 	if (!doneAutoFired) {//A check to only shoot once
 		switch (autoFireState) {
 		case AutoInit://Puts the arm down until lowerLimit is reached and resets shooterEncoder. Transitions to GoHome.
@@ -206,7 +208,7 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "EncoderC: %i",
 			shooterEncoder->Get());
 	dsLCD->UpdateLCD();
-} 
+}
 
 void ShooterControl::feed(bool toggleMotor) {
 	//Used only in Autonomous, toggleMotor is true for 2.5 Seconds, then False. 
@@ -220,9 +222,10 @@ void ShooterControl::feed(bool toggleMotor) {
 
 }
 
+
 void ShooterControl::toggleColor() {
 	bool isStartPressed = xbox->isStartPressed();
-	
+
 	if (isStartPressed) {//Toggle for Colors
 		lightCounter++;
 		if (lightCounter > 2) {
@@ -286,14 +289,14 @@ double ShooterControl::loadRampProfile(double timeChange) {
 void ShooterControl::ballGrabber() {
 	bool aHeld = xbox->isAHeld();
 	double ballGrabberOutput = STOPPEDSPEED;
-	
+
 	switch (fireState) {
 	case Home://Home mode is defined by ballGrabber being retracted. With or without the ball
 		pneumaticsControl->ballGrabberRetract();
 		// new Code
-		if(aHeld){
-			ballGrabberOutput = - BALLMOTOR5SPEED;
-		}else{
+		if (aHeld) {
+			ballGrabberOutput = -BALLMOTOR5SPEED;
+		} else {
 			ballGrabberOutput = STOPPEDSPEED;
 		}
 		// new Code 
@@ -341,16 +344,23 @@ bool ShooterControl::canIFire() {//A check to see if the ballgrabber is Extended
 
 void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 	bool isRTHeld = xbox->isRightTriggerHeld();
+	//bool isRTHeld = xbox->isYPressed(); //this should is yHeld
+	bool isYPressed = xbox->isYPressed();
 	bool isLTHeld = xbox->isLeftTriggerHeld();
 	bool isUpperLimit = upperLimit->Get() == 0;
 	bool isLowerLimit = lowerLimit->Get() == 0;
 	bool isRBHeld = xbox->isRBumperHeld();
 	bool isXHeld = xbox->isXHeld();
+	
 
 	//for ramping
 	double timeChange = (shooterTimer.Get() - previousTime);
 	previousTime = shooterTimer.Get();
 	int count = shooterEncoder->Get();
+	if(maxEncoderValue < count){
+		maxEncoderValue = count;
+	}
+	
 
 	switch (fireState) {
 	case Init: //Starts The Robot In This State
@@ -401,8 +411,9 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 			controller->SetSetpoint(shooterEncoder->Get());
 			fireState = Retracting;
 		} else if ((count > READYTOFIRE - 3) && (count < READYTOFIRE + 3)) {
-			if (isRTHeld && canIFire()) {
+			if (isYPressed && canIFire()) {
 				fireState = Firing;
+				maxEncoderValue = 0;
 			}
 			if (isXHeld) {
 				fireState = TrussShot;
@@ -451,7 +462,8 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 
 	case Firing://While RTHeld, shooter moves using pIDController. Stops when upperLimit or encoder count is reached
 		//firing
-		if (!isRTHeld) {
+		//if (!isRTHeld) {
+		if (false) {
 			if (canIFire()) {
 				fireState = Retracting;
 				controller->SetSetpoint(shooterEncoder->Get());
@@ -459,10 +471,11 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 				controller->SetSetpoint(shooterEncoder->Get());
 				fireState = Fired;
 			}
-		} else {
+		} else  {
 			if (isUpperLimit || shooterEncoder->Get() >= FIRE) {
 				controller->SetSetpoint(FIRE);
-				fireState = Fired;
+				//fireState = Fired;
+				fireState = Retracting;
 			} else {
 				//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
 				double countChange = shootRampProfile(timeChange);
@@ -486,6 +499,7 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 		if (this->shooterEncoder->Get() <= HOME + 5) {
 			controller->SetSetpoint(HOME);
 			fireState = Home;
+
 		}
 		double positionChange = downRampProfile(timeChange);
 		double newSetpoint = controller->GetSetpoint() + positionChange;
@@ -497,8 +511,12 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 	default:
 		break;
 	}
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "S: %s C: %i",
-			GetStateString(), count);
+	
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "S: %s C: %i E: %i",
+			GetStateString(), count ,maxEncoderValue);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "E: %i",
+				maxEncoderValue);
+		
 
 }
 

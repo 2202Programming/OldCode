@@ -14,6 +14,7 @@ public:
 	void initializeAuto();
 	bool autoDrive(double autoDriveDistance);
 	void run();
+	void beastMode();
 	bool autoPIDDrive();
 	char*DriveControl::GetAutoStateString();
 	bool autoPIDDrive2();
@@ -50,5 +51,6 @@ private:
 	};
 	AutoState currentAutoState;
 	float autoDriveRampProfile(float timeChange);
+	float SpeedControl; 
 };
 #endif
