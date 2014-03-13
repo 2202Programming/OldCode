@@ -21,21 +21,25 @@
 #define LOADINGSPEED 0.4 
 #define ARMINGSPEED -0.1
 #define SHOOTINGSPEED 0.5
+#define MANUALPIDFIRE 1.00
+#define TRUSSPIDFIRE  1.00
 #define RIGHT 5000
 #define HOME 5
 #define ARMING 0
+#define TRUSSSETUP 15
+#define TRUSSPIDSETUP -0.3
 #define READYTOFIRE  30 // 40 also Used at Terra Hote // 90 //at Terra Hote it was 30
 #define FIRE  225 // 200 //260 Used at Terra Hote 
-#define TRUSS 250
+#define TRUSS 110 
 #define PASS 200 
 #define PIDTOLERANCE 5.0
-#define RETRACTCPS  175.0 //for down ramp profile
+#define RETRACTCPS 250 // 75 //175.0 //for down ramp profile
 #define SHOOTCPS 900 //750.0  //  900.0 //750.0 rate for Regionals in indiana//for the shoot ramp
 #define PASSCPS 200.0 //rate of the passing ramp
 #define TRUSSCPS 1300.0 //rate of the truss throw ramp 
 #define LOADCPS 100.0
-#define Kp 0.012
-#define	Ki 0.0010 // 0.00075
+#define Kp 0.009
+#define	Ki 0.0003 // 0.00075
 #define	Kd 0.006
 
 static ShooterControl *shootercontrol = NULL;
@@ -73,7 +77,7 @@ ShooterControl::ShooterControl() {
 	LED3 = new Relay(5, Relay::kForwardOnly);
 	autoShot = false; //turns to true as soon as it is shot in autonomous
 	maxEncoderValue = 0;
-	
+
 }
 
 void ShooterControl::initialize() {
@@ -222,7 +226,6 @@ void ShooterControl::feed(bool toggleMotor) {
 
 }
 
-
 void ShooterControl::toggleColor() {
 	bool isStartPressed = xbox->isStartPressed();
 
@@ -316,10 +319,9 @@ void ShooterControl::ballGrabber() {
 	case Fired:
 	case Firing:
 	case ReadyToFire://Extends the ballgrabber. Spins ballMotors on aHeld to pick up the ball
+		ballGrabberOutput = -BALLMOTOR5SPEED;
 		pneumaticsControl->ballGrabberExtend();
-		if (pneumaticsControl->ballGrabberIsExtended() && aHeld) {
-			ballGrabberOutput = -BALLMOTOR5SPEED;
-		} else {
+		if (pneumaticsControl->ballGrabberIsExtended()) {
 			ballGrabberOutput = STOPPEDSPEED;
 		}
 		break;
@@ -350,17 +352,15 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 	bool isUpperLimit = upperLimit->Get() == 0;
 	bool isLowerLimit = lowerLimit->Get() == 0;
 	bool isRBHeld = xbox->isRBumperHeld();
-	bool isXHeld = xbox->isXHeld();
-	
+	bool isXPressed = xbox->isXPressed();
 
 	//for ramping
 	double timeChange = (shooterTimer.Get() - previousTime);
 	previousTime = shooterTimer.Get();
 	int count = shooterEncoder->Get();
-	if(maxEncoderValue < count){
+	if (maxEncoderValue < count) {
 		maxEncoderValue = count;
 	}
-	
 
 	switch (fireState) {
 	case Init: //Starts The Robot In This State
@@ -380,6 +380,7 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 		//controller->SetSetpoint(HOME);
 		if (isRBHeld) {
 			fireState = ReadyToFire;
+			pneumaticsControl->compressorDisable();
 		}
 		if (isLTHeld) {
 			fireState = Arming;
@@ -413,10 +414,13 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 		} else if ((count > READYTOFIRE - 3) && (count < READYTOFIRE + 3)) {
 			if (isYPressed && canIFire()) {
 				fireState = Firing;
+				pIDControlOutput->PIDOverideEnable(MANUALPIDFIRE);
 				maxEncoderValue = 0;
 			}
-			if (isXHeld) {
-				fireState = TrussShot;
+			if (isXPressed && canIFire()) {
+				fireState = TrussSetup;
+				pIDControlOutput->PIDOverideEnable(TRUSSPIDSETUP);
+				maxEncoderValue = 0;
 			}
 		} else {
 			if (pneumaticsControl->ballGrabberIsExtended()) {
@@ -429,28 +433,36 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 			}
 		}
 		break;
-
-	case TrussShot://A higher shoot, with lower release point. X must be held.
-		if (!isXHeld) {
-			if (canIFire()) {
-				fireState = Retracting;
-				controller->SetSetpoint(shooterEncoder->Get());
-			} else {
-				controller->SetSetpoint(shooterEncoder->Get());
-				fireState = Fired;
-			}
+	case TrussSetup:
+		if (shooterEncoder->Get() <= TRUSSSETUP) {
+			fireState = TrussShot;
+			pIDControlOutput->PIDOverideEnable(TRUSSPIDFIRE);
+			maxEncoderValue = 0;
 		} else {
-			if (isUpperLimit || shooterEncoder->Get() >= TRUSS) {
-				controller->SetSetpoint(TRUSS);
-				fireState = Fired;
-			} else {
-				double countChange = trussRampProfile(timeChange);
-				double newSetpoint = controller->GetSetpoint() + countChange;
-				if (newSetpoint >= TRUSS) {
-					newSetpoint = TRUSS;
-				}
-				controller->SetSetpoint(newSetpoint);
+			//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
+			double countChange = shootRampProfile(timeChange);
+			double newSetpoint = controller->GetSetpoint() + countChange;
+			if (newSetpoint >= TRUSSSETUP) {
+				newSetpoint = TRUSSSETUP;
 			}
+			controller->SetSetpoint(newSetpoint);
+		}
+		break;
+	case TrussShot://A higher shoot, with lower release point. X must be held.
+
+		if (isUpperLimit || shooterEncoder->Get() >= TRUSS) {
+			controller->SetSetpoint(TRUSS);
+			//fireState = Fired;
+			pIDControlOutput->PIDOverideDisable();
+			fireState = Retracting;
+		} else {
+			//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
+			double countChange = shootRampProfile(timeChange);
+			double newSetpoint = controller->GetSetpoint() + countChange;
+			if (newSetpoint >= TRUSS) {
+				newSetpoint = TRUSS;
+			}
+			controller->SetSetpoint(newSetpoint);
 		}
 		break;
 
@@ -471,10 +483,11 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 				controller->SetSetpoint(shooterEncoder->Get());
 				fireState = Fired;
 			}
-		} else  {
+		} else {
 			if (isUpperLimit || shooterEncoder->Get() >= FIRE) {
 				controller->SetSetpoint(FIRE);
 				//fireState = Fired;
+				pIDControlOutput->PIDOverideDisable();
 				fireState = Retracting;
 			} else {
 				//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
@@ -498,6 +511,7 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 	case Retracting:// Returns to Home. Using downRampProfile. 
 		if (this->shooterEncoder->Get() <= HOME + 5) {
 			controller->SetSetpoint(HOME);
+			pneumaticsControl->compressorEnable();
 			fireState = Home;
 
 		}
@@ -511,12 +525,10 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 	default:
 		break;
 	}
-	
+
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "S: %s C: %i E: %i",
-			GetStateString(), count ,maxEncoderValue);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "E: %i",
-				maxEncoderValue);
-		
+			GetStateString(), count, maxEncoderValue);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "E: %i", maxEncoderValue);
 
 }
 
