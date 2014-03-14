@@ -15,10 +15,7 @@
  #define SHIFTDELAYINSECONDS 1.0
  */
 
-//#define FRONTRIGHTMOTOR 1
-//#define BACKRIGHTMOTOR 2
-//#define FRONTLEFTMOTOR 3
-//#define BACKLEFTMOTOR 4
+
 #define FRONTRIGHTMOTOR 4
 #define BACKRIGHTMOTOR 3
 #define FRONTLEFTMOTOR 2
@@ -31,10 +28,6 @@
 #define DEADZONE 0.1
 #define FRICTION 0.2
 #define INITIAL 0.0
-//#define RIGHTENCODER_A 12
-//#define RIGHTENCODER_B 11
-//#define LEFTENCODER_A 14
-//#define LEFTENCODER_B 13
 #define RIGHTENCODER_A 14
 #define RIGHTENCODER_B 13
 #define LEFTENCODER_A 12
@@ -42,12 +35,10 @@
 #define Kp 0.010
 #define	Ki 0.0000
 #define	Kd 0.0
-//#define Kp 0.0
-//#define	Ki 0.0
-//#define	Kd 0.0
 #define AUTODRIVECPS 800.0
 #define AUTOENDDISTANCE 2600 // less than 9000  // was 2500 originally //3000 at terra hote
 #define PIDTOLERANCE 5.0
+#define BEASTMODE 0.75
 
 DriveControl::DriveControl() {
 	this->motorBackLeft = new Talon(BACKLEFTMOTOR);
@@ -73,9 +64,8 @@ DriveControl::DriveControl() {
 	dsLCD = DriverStationLCD::GetInstance();
 	pneumaticsControl = PneumaticsControl::getInstance();
 	SpeedControl = SPEEDCONTROL;
-	bool beastMode = false;
-
-
+	beastMode = false;
+	
 }
 
 void DriveControl::initialize() {
@@ -86,11 +76,7 @@ void DriveControl::initialize() {
 	leftEncoder->SetDistancePerPulse(REVOLUTIONS);
 	rightEncoder->SetDistancePerPulse(REVOLUTIONS);
 	pneumaticsControl->shiftUp();
-	//	controllerLeft->Disable();
-	//	controllerRight->Disable();
-	autoTimer.Stop();
-	//shiftState = Init;
-	//shiftDelay.Reset();
+	autoTimer.Stop();	
 }
 
 void DriveControl::initializeAuto() {
@@ -102,27 +88,11 @@ void DriveControl::initializeAuto() {
 	rightEncoder->SetDistancePerPulse(1);
 	rightEncoder->SetPIDSourceParameter(Encoder::kDistance);
 	rightEncoder->Start();
-	//	controllerLeft->SetInputRange(-10000.0, 10000.0);
-	//	controllerRight->SetInputRange(-10000.0, 10000.0);
-	//	controllerLeft->SetOutputRange(-10000.0, 10000.0);
-	//	controllerRight->SetOutputRange(-10000.0, 10000.0);
-	//	controllerLeft->SetPercentTolerance(85);
-	//	controllerRight->SetPercentTolerance(85);
-	//	controllerRight->SetContinuous();
-	//	controllerLeft->SetContinuous();
-	//	controllerLeft->Reset();
-	//	controllerRight->Reset();
 	autoTimer.Stop();
 	autoTimer.Reset();
 	autoTimer.Start();
 	previousAutoTime = autoTimer.Get();
-	totalPositionChange = 0.0;
-	//	currentAutoState = AutoDrive;
-	//
-	//	controllerLeft->Enable();
-	//	controllerRight->Enable();
-	//	controllerLeft->SetSetpoint(0.0);
-	//	controllerRight->SetSetpoint(0.0);
+	totalPositionChange = 0.0;	
 }
 
 /*
@@ -135,9 +105,6 @@ void DriveControl::initializeAuto() {
  * output = kp * error + ki * integratorValue * error
  * 
  * integratorvalue => intetegratorvalue + error * change in time
- * 
- * 
- * 
  */
 
 bool DriveControl::autoPIDDrive2() {
@@ -157,7 +124,6 @@ bool DriveControl::autoPIDDrive2() {
 
 	this->pIDControlOutputLeft->PIDWrite(-leftOutput);
 	this->pIDControlOutputRight->PIDWrite(-rightOutput);
-
 	//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "LE %f, RE:%f",
 	//			leftError, rightError);
 	////	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "LC%i, RC%i", countLeft,
@@ -195,6 +161,7 @@ bool DriveControl::autoDrive(double autoDriveDistance) {
 		return true;
 	}
 }
+
 char*DriveControl::GetAutoStateString() {
 
 	switch (currentAutoState) {
@@ -208,62 +175,10 @@ char*DriveControl::GetAutoStateString() {
 	}
 }
 
-bool DriveControl::autoPIDDrive() {
-	double timeChange = (autoTimer.Get() - previousAutoTime);
-	previousAutoTime = autoTimer.Get();
-	int countLeft = leftEncoder->Get();
-	int countRight = rightEncoder->Get();
-	//	double countAverage = (countLeft - countRight) / (2.0);
-	//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line2, "AD: %s, RAS:%f",
-	//			GetAutoStateString(), autoDriveRampProfile(timeChange));
-	//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "LC%i, RC%i", countLeft,
-	//			countRight);
-	//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "LM%f, RM%f",
-	//			this->motorBackLeft->Get(), this->motorBackRight->Get());
-	//	dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "LP%f, RP%f",
-	//			controllerLeft->GetSetpoint(), controllerRight->GetSetpoint());
-	dsLCD->UpdateLCD();
-	switch (currentAutoState) {
-	case AutoDrive:
-		//		if ((countAverage > AUTOENDDISTANCE - PIDTOLERANCE)) {
-		//			controllerLeft->SetSetpoint(AUTOENDDISTANCE);
-		//			controllerRight->SetSetpoint(-AUTOENDDISTANCE);
-		//			currentAutoState = AutoStopped;
-		//		} else {
-		float positionChange = autoDriveRampProfile(timeChange);
-		float newSetpointLeft = controllerLeft->GetSetpoint() + positionChange;
-		float newSetpointRight = controllerRight->GetSetpoint()
-				- positionChange;
-		if (newSetpointLeft >= AUTOENDDISTANCE) {
-			newSetpointLeft = AUTOENDDISTANCE;
-		}
-		if (newSetpointRight <= -AUTOENDDISTANCE) {
-			newSetpointRight = -AUTOENDDISTANCE;
-		}
-		dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "SL%f, SR%f",
-				newSetpointLeft, newSetpointRight);
-		dsLCD->UpdateLCD();
-
-		controllerLeft->SetSetpoint(newSetpointLeft);
-		controllerRight->SetSetpoint(newSetpointRight);
-
-		//		}
-		break;
-
-	case AutoStopped:
-		//controllerLeft->Disable();
-		//controllerRight->Disable();
-		return true;
-
-	}
-	//	this->pIDControlOutputLeft->PIDWrite(0.2);
-	//	this->pIDControlOutputRight->PIDWrite(0.2);
-
-	return false;
-}
 float DriveControl::autoDriveRampProfile(float timeChange) {
 	return (timeChange * AUTODRIVECPS);
 }
+
 /*
  * Runs Arcade Drive
  */
@@ -299,21 +214,22 @@ void DriveControl::runArcadeDrive() {
 
 }
 
-void DriveControl::beastMode() {
-	bool isBPressed = xbox->isBPressed();
-	/*
-	if (isBPressed) {
+void DriveControl::BeastMode() { //Makes the acceleration of the robot faster
+	float RightJoyStickValue = xbox->getAxisRightY();	
+	if(RightJoyStickValue >= BEASTMODE){
 		beastMode = true;
-	} 
+	}
+	if(RightJoyStickValue <= -BEASTMODE){
+		beastMode = false;
+	}
 	
 	if (beastMode) {
-		SpeedControl = 0.75;
+		SpeedControl = BEASTMODE;
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "BEAST MODE");
 	} else {
-		SpeedControl = 1.00;
+		SpeedControl = SPEEDCONTROL;
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "NORMAL MODE");
 	}
-*/
 	dsLCD->UpdateLCD();
 
 }
@@ -332,7 +248,7 @@ void DriveControl::manualShift() {
 void DriveControl::run() {
 	runArcadeDrive();
 	manualShift();
-	beastMode();
+	BeastMode();
 }
 
 /*

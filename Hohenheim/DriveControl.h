@@ -14,7 +14,7 @@ public:
 	void initializeAuto();
 	bool autoDrive(double autoDriveDistance);
 	void run();
-	void beastMode();
+	void BeastMode();
 	bool autoPIDDrive();
 	char*DriveControl::GetAutoStateString();
 	bool autoPIDDrive2();
@@ -26,14 +26,6 @@ private:
 	DriverStationLCD *dsLCD;
 	Encoder *leftEncoder;
 	Encoder *rightEncoder;
-	/*
-	 enum ShiftStates {
-	 Init, Low, High, DelayToLow, DelayToHigh
-	 };
-	 ShiftStates shiftState;
-	 int delayCount;
-	 Timer shiftDelay;
-	 */
 	void runArcadeDrive();
 	void manualShift();
 	Talon * motorFrontLeft;
@@ -52,5 +44,6 @@ private:
 	AutoState currentAutoState;
 	float autoDriveRampProfile(float timeChange);
 	float SpeedControl; 
+	bool beastMode;
 };
 #endif

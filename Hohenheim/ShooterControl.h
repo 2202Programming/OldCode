@@ -30,8 +30,6 @@ public:
 private:
 	double downRampProfile(double timeChange);
 	double shootRampProfile(double timeChange);
-	double passRampProfile(double timeChange);
-	double trussRampProfile(double timeChange);
 	double loadRampProfile(double timeChange);
 	bool canIFire();
 	PneumaticsControl *pneumaticsControl;
@@ -61,7 +59,7 @@ private:
 	int limitCount;
 	int maxEncoderValue;
 	enum fireStates {
-		Arming, ReadyToFire, Firing, Init, Fired, Retracting, Home, Passing, TrussShot ,TrussSetup
+		Arming, ReadyToFire, Firing, Init, Fired, Retracting, Home, Passing, TrussShot ,TrussSetup , HumanShot, HumanSetup
 	};
 	enum autoFireStates {
 		AutoInit, GoHome, AutoWait, AutoFire , AutoRetract
