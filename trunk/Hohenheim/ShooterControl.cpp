@@ -23,20 +23,21 @@
 #define SHOOTINGSPEED 0.5
 #define MANUALPIDFIRE 1.00
 #define TRUSSPIDFIRE  1.00
+#define HUMANPIDFIRE 1.00
 #define RIGHT 5000
 #define HOME 5
 #define ARMING 0
 #define TRUSSSETUP 15
 #define TRUSSPIDSETUP -0.3
+#define HUMANSHOOTSETUP 45
+#define HUMANPIDSETUP 0.3
 #define READYTOFIRE  30 // 40 also Used at Terra Hote // 90 //at Terra Hote it was 30
 #define FIRE  225 // 200 //260 Used at Terra Hote 
 #define TRUSS 110 
-#define PASS 200 
+#define HUMANSHOT 250
 #define PIDTOLERANCE 5.0
 #define RETRACTCPS 250 // 75 //175.0 //for down ramp profile
 #define SHOOTCPS 900 //750.0  //  900.0 //750.0 rate for Regionals in indiana//for the shoot ramp
-#define PASSCPS 200.0 //rate of the passing ramp
-#define TRUSSCPS 1300.0 //rate of the truss throw ramp 
 #define LOADCPS 100.0
 #define Kp 0.009
 #define	Ki 0.0003 // 0.00075
@@ -93,9 +94,7 @@ void ShooterControl::initialize() {
 	shooterTimer.Reset();
 	shooterTimer.Start();
 	previousTime = shooterTimer.Get();
-	//LED1->Set(Relay::kOn);
-	//LED2->Set(Relay::kOn);
-	//LED3->Set(Relay::kOn);
+	//LED1->Set(Relay::kOn); //LED2->Set(Relay::kOn); //LED3->Set(Relay::kOn);
 	lightCounter = 0;
 }
 
@@ -106,9 +105,6 @@ void ShooterControl::initializeAuto() {
 	shooterEncoder->Start();
 	shooterEncoder->SetDistancePerPulse(1);
 	shooterEncoder->SetPIDSourceParameter(Encoder::kDistance);
-	//	controller->SetPercentTolerance(85);
-	//	controller->SetContinuous();
-	//	controller->Disable();
 	autoFireState = AutoInit;
 	doneAutoFired = false;
 	previousTime = 0.0;
@@ -130,25 +126,17 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 	bool isLowerLimit = lowerLimit->Get() == 0;
 	double timeChange = (shooterTimer.Get() - previousTime);
 	previousTime = shooterTimer.Get();
-	//int count = shooterEncoder->Get();
 
 	if (!doneAutoFired) {//A check to only shoot once
 		switch (autoFireState) {
 		case AutoInit://Puts the arm down until lowerLimit is reached and resets shooterEncoder. Transitions to GoHome.
 			if (isLowerLimit) {
 				shooterEncoder->Reset();
-				//				pIDControlOutput->PIDWrite(STOPPEDSPEED);
-				//				controller->Enable();
-				//				controller->SetSetpoint(HOME);
-				//				cummulativeTime = 0.0;
-				//				autoFireState = AutoReady;
-				//				shooterTimer.Start();
 				pIDControlOutput->PIDWrite(0.3);
 				autoFireState = GoHome;
 
 			} else {
-				if (canIFire()) {
-					// Drop Down the Arm If Loader is extended
+				if (canIFire()) {// Drop Down the Arm If Loader is extended
 					pIDControlOutput->PIDWrite(ARMINGSPEED);
 				}
 			}
@@ -182,8 +170,6 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 				controller->SetSetpoint(FIRE);
 				pneumaticsControl->compressorEnable();
 				autoFireState = AutoRetract;
-				//				doneAutoFired = true;
-
 			} else {
 				double countChange = shootRampProfile(timeChange);
 				double newSetpoint = controller->GetSetpoint() + countChange;
@@ -264,8 +250,7 @@ char*ShooterControl::GetAutoStateString() {
 	}
 }
 
-bool ShooterControl::doneAutoFire() {
-	//returns true only after done firing // Edit: not need honestly 
+bool ShooterControl::doneAutoFire() {//returns true only after done firing // Edit: not need honestly 
 	return doneAutoFired;
 }
 
@@ -275,14 +260,6 @@ double ShooterControl::downRampProfile(double timeChange) {
 
 double ShooterControl::shootRampProfile(double timeChange) {
 	return (timeChange * SHOOTCPS);
-}
-
-double ShooterControl::passRampProfile(double timeChange) {
-	return (timeChange * PASSCPS);
-}
-
-double ShooterControl::trussRampProfile(double timeChange) {
-	return (timeChange * TRUSSCPS);
 }
 
 double ShooterControl::loadRampProfile(double timeChange) {
@@ -296,13 +273,11 @@ void ShooterControl::ballGrabber() {
 	switch (fireState) {
 	case Home://Home mode is defined by ballGrabber being retracted. With or without the ball
 		pneumaticsControl->ballGrabberRetract();
-		// new Code
-		if (aHeld) {
+ 		if (aHeld) {
 			ballGrabberOutput = -BALLMOTOR5SPEED;
 		} else {
 			ballGrabberOutput = STOPPEDSPEED;
 		}
-		// new Code 
 		break;
 	case Init:
 		pneumaticsControl->ballGrabberExtend();
@@ -346,13 +321,13 @@ bool ShooterControl::canIFire() {//A check to see if the ballgrabber is Extended
 
 void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 	bool isRTHeld = xbox->isRightTriggerHeld();
-	//bool isRTHeld = xbox->isYPressed(); //this should is yHeld
 	bool isYPressed = xbox->isYPressed();
 	bool isLTHeld = xbox->isLeftTriggerHeld();
 	bool isUpperLimit = upperLimit->Get() == 0;
 	bool isLowerLimit = lowerLimit->Get() == 0;
 	bool isRBHeld = xbox->isRBumperHeld();
 	bool isXPressed = xbox->isXPressed();
+	bool isBPressed = xbox->isBPressed();
 
 	//for ramping
 	double timeChange = (shooterTimer.Get() - previousTime);
@@ -377,7 +352,6 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 		}
 		break;
 	case Home: //Default State For Shooter Arm
-		//controller->SetSetpoint(HOME);
 		if (isRBHeld) {
 			fireState = ReadyToFire;
 			pneumaticsControl->compressorDisable();
@@ -422,6 +396,10 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 				pIDControlOutput->PIDOverideEnable(TRUSSPIDSETUP);
 				maxEncoderValue = 0;
 			}
+			if (isBPressed && canIFire()) {
+				fireState = HumanShot;
+				pIDControlOutput->PIDOverideEnable(HUMANPIDSETUP);
+			}
 		} else {
 			if (pneumaticsControl->ballGrabberIsExtended()) {
 				double positionChange = loadRampProfile(timeChange);
@@ -439,7 +417,6 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 			pIDControlOutput->PIDOverideEnable(TRUSSPIDFIRE);
 			maxEncoderValue = 0;
 		} else {
-			//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
 			double countChange = shootRampProfile(timeChange);
 			double newSetpoint = controller->GetSetpoint() + countChange;
 			if (newSetpoint >= TRUSSSETUP) {
@@ -449,14 +426,11 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 		}
 		break;
 	case TrussShot://A higher shoot, with lower release point. X must be held.
-
 		if (isUpperLimit || shooterEncoder->Get() >= TRUSS) {
 			controller->SetSetpoint(TRUSS);
-			//fireState = Fired;
 			pIDControlOutput->PIDOverideDisable();
 			fireState = Retracting;
 		} else {
-			//pIDControlOutput->PIDWrite(SHOOTINGSPEED);
 			double countChange = shootRampProfile(timeChange);
 			double newSetpoint = controller->GetSetpoint() + countChange;
 			if (newSetpoint >= TRUSS) {
@@ -465,15 +439,40 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 			controller->SetSetpoint(newSetpoint);
 		}
 		break;
-
+	case HumanSetup:
+		if (shooterEncoder->Get() <= HUMANSHOOTSETUP) {
+			fireState = HumanShot;
+			pIDControlOutput->PIDOverideEnable(HUMANPIDFIRE);
+			maxEncoderValue = 0;
+		} else {
+			double countChange = shootRampProfile(timeChange);
+			double newSetpoint = controller->GetSetpoint() + countChange;
+			if (newSetpoint >= HUMANSHOOTSETUP) {
+				newSetpoint = HUMANSHOOTSETUP;
+			}
+			controller->SetSetpoint(newSetpoint);
+		}
+		break;
+	case HumanShot://Far Shoot to human player, with higher release point. B must be held.
+		if (isUpperLimit || shooterEncoder->Get() >= HUMANSHOT) {
+			controller->SetSetpoint(HUMANSHOT);
+			pIDControlOutput->PIDOverideDisable();
+			fireState = Retracting;
+		} else {
+			double countChange = shootRampProfile(timeChange);
+			double newSetpoint = controller->GetSetpoint() + countChange;
+			if (newSetpoint >= HUMANSHOT) {
+				newSetpoint = HUMANSHOT;
+			}
+			controller->SetSetpoint(newSetpoint);
+		}
+		break;
 	case Passing://Starts the ballgrabberMotors in reverse. See BallGrabber Method.
 		if (!isRTHeld) {
 			fireState = Home;
 		}
 		break;
-
 	case Firing://While RTHeld, shooter moves using pIDController. Stops when upperLimit or encoder count is reached
-		//firing
 		//if (!isRTHeld) {
 		if (false) {
 			if (canIFire()) {
@@ -501,13 +500,11 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 		}
 
 		break;
-
 	case Fired://Moves to Retracting if RTHeld is released and ballgrabber is extended 
 		if (!isRTHeld && canIFire()) {
 			fireState = Retracting;
 		}
 		break;
-
 	case Retracting:// Returns to Home. Using downRampProfile. 
 		if (this->shooterEncoder->Get() <= HOME + 5) {
 			controller->SetSetpoint(HOME);
@@ -552,6 +549,12 @@ char*ShooterControl::GetStateString() {//Returns a String Value of the Different
 		return "Passing";
 	case TrussShot:
 		return "TrussShot";
+	case TrussSetup:
+		return "TrussSetup";
+	case HumanShot:
+		return "HumanShot";
+	case HumanSetup:
+		return "HumanSetup";
 	default:
 		return "";
 	}

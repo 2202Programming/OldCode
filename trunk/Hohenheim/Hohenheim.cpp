@@ -48,7 +48,6 @@ public:
 	void Autonomous(void) {
 		DriveThenShootAuto();
 		//AutonomousStateMachine();
-
 	}
 
 	void AutonomousStateMachine() {
