@@ -59,7 +59,7 @@ private:
 	int limitCount;
 	int maxEncoderValue;
 	enum fireStates {
-		Arming, ReadyToFire, Firing, Init, Fired, Retracting, Home, Passing, TrussShot ,TrussSetup , HumanShot, HumanSetup
+		Arming, ReadyToFire, Firing, Init, Fired, Retracting, Home, Passing, TrussShot ,TrussSetup , HumanShot, HumanSetup, StageOneFire, StageTwoFire
 	};
 	enum autoFireStates {
 		AutoInit, GoHome, AutoWait, AutoFire , AutoRetract
@@ -80,5 +80,13 @@ private:
 	Relay *LED2;
 	Relay *LED3;
 	double cummulativeTime;
+//float TRUSSSETUP 15
+//float TRUSSPIDSETUP -0.3
+//float TRUSSPIDFIRE  1.00
+//float TRUSS 110 
+	int twoStageSetupPosition;
+	float twoStagePidSetup;
+	int twoStageEndPosition;
+	float twoStagePidFire;
 };
 #endif

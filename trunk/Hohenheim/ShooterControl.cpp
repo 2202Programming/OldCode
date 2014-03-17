@@ -22,18 +22,21 @@
 #define ARMINGSPEED -0.1
 #define SHOOTINGSPEED 0.5
 #define MANUALPIDFIRE 1.00
-#define TRUSSPIDFIRE  1.00
+#define AUTOPIDFIRE 1.00
 #define HUMANPIDFIRE 1.00
 #define RIGHT 5000
 #define HOME 5
 #define ARMING 0
+
 #define TRUSSSETUP 15
 #define TRUSSPIDSETUP -0.3
+#define TRUSSPIDFIRE  1.00
+#define TRUSS 110 
+
 #define HUMANSHOOTSETUP 45
 #define HUMANPIDSETUP 0.3
 #define READYTOFIRE  30 // 40 also Used at Terra Hote // 90 //at Terra Hote it was 30
 #define FIRE  225 // 200 //260 Used at Terra Hote 
-#define TRUSS 110 
 #define HUMANSHOT 250
 #define PIDTOLERANCE 5.0
 #define RETRACTCPS 250 // 75 //175.0 //for down ramp profile
@@ -78,6 +81,10 @@ ShooterControl::ShooterControl() {
 	LED3 = new Relay(5, Relay::kForwardOnly);
 	autoShot = false; //turns to true as soon as it is shot in autonomous
 	maxEncoderValue = 0;
+	twoStageSetupPosition = 0;
+	twoStagePidSetup = 0.0;
+	twoStageEndPosition = 0;
+	twoStagePidFire = 0.0;
 
 }
 
@@ -94,6 +101,7 @@ void ShooterControl::initialize() {
 	shooterTimer.Reset();
 	shooterTimer.Start();
 	previousTime = shooterTimer.Get();
+	pIDControlOutput->PIDOverideDisable();
 	//LED1->Set(Relay::kOn); //LED2->Set(Relay::kOn); //LED3->Set(Relay::kOn);
 	lightCounter = 0;
 }
@@ -101,13 +109,16 @@ void ShooterControl::initialize() {
 void ShooterControl::initializeAuto() {
 	shooterTimer.Stop();
 	shooterTimer.Reset();
+	shooterTimer.Start();
+	previousTime = shooterTimer.Get();
 	shooterEncoder->Reset();
 	shooterEncoder->Start();
 	shooterEncoder->SetDistancePerPulse(1);
 	shooterEncoder->SetPIDSourceParameter(Encoder::kDistance);
+	controller->Disable();
+	pIDControlOutput->PIDOverideDisable();
 	autoFireState = AutoInit;
 	doneAutoFired = false;
-	previousTime = 0.0;
 	cummulativeTime = 0.0;
 }
 
@@ -132,9 +143,11 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 		case AutoInit://Puts the arm down until lowerLimit is reached and resets shooterEncoder. Transitions to GoHome.
 			if (isLowerLimit) {
 				shooterEncoder->Reset();
-				pIDControlOutput->PIDWrite(0.3);
+				controller->Enable();
+				controller->SetSetpoint(HOME);
+				//pIDControlOutput->PIDWrite(0.3);
 				autoFireState = GoHome;
-
+//				shooterTimer.Start();
 			} else {
 				if (canIFire()) {// Drop Down the Arm If Loader is extended
 					pIDControlOutput->PIDWrite(ARMINGSPEED);
@@ -142,17 +155,24 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 			}
 			break;
 		case GoHome://If the Encoder Count is Greater Than ReadyTofire, Enable Controller, and SetSetpoint. Transition to AutoWait. Else moves the ShooterArm
-			pIDControlOutput->PIDWrite(0.3);
-			if (shooterEncoder->Get() > READYTOFIRE) {
-				pIDControlOutput->PIDWrite(STOPPEDSPEED);
-				controller->SetPercentTolerance(85);
-				controller->SetContinuous();
-				controller->Enable();
-				controller->SetSetpoint(shooterEncoder->Get());
+			if (shooterEncoder->Get() < READYTOFIRE + 6
+					&& shooterEncoder->Get() > READYTOFIRE - 6) {
+				//				pIDControlOutput->PIDWrite(STOPPEDSPEED);
+				//				controller->SetPercentTolerance(85);
+				//				controller->SetContinuous();
+				//				controller->SetSetpoint(shooterEncoder->Get());
+				//				controller->Enable();
 				cummulativeTime = 0.0;
 				pneumaticsControl->compressorDisable();
 				autoFireState = AutoWait;
-				shooterTimer.Start();
+			} else {
+				double positionChange = loadRampProfile(timeChange);
+				double newSetpoint = controller->GetSetpoint() + positionChange;
+				if (newSetpoint >= READYTOFIRE) {
+					newSetpoint = READYTOFIRE;
+				}
+				controller->SetSetpoint(newSetpoint);
+
 			}
 
 			break;
@@ -161,6 +181,7 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 			if (cummulativeTime >= 2.5) { //waits 2.5 seconds once arm is at readyToFire
 				if (canIFire()) {
 					autoFireState = AutoFire;
+					pIDControlOutput->PIDOverideEnable(AUTOPIDFIRE);
 				}
 			}
 			break;
@@ -169,6 +190,7 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 			if (isUpperLimit || shooterEncoder->Get() > FIRE) {
 				controller->SetSetpoint(FIRE);
 				pneumaticsControl->compressorEnable();
+				pIDControlOutput->PIDOverideDisable();
 				autoFireState = AutoRetract;
 			} else {
 				double countChange = shootRampProfile(timeChange);
@@ -273,7 +295,7 @@ void ShooterControl::ballGrabber() {
 	switch (fireState) {
 	case Home://Home mode is defined by ballGrabber being retracted. With or without the ball
 		pneumaticsControl->ballGrabberRetract();
- 		if (aHeld) {
+		if (aHeld) {
 			ballGrabberOutput = -BALLMOTOR5SPEED;
 		} else {
 			ballGrabberOutput = STOPPEDSPEED;
@@ -352,6 +374,7 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 		}
 		break;
 	case Home: //Default State For Shooter Arm
+
 		if (isRBHeld) {
 			fireState = ReadyToFire;
 			pneumaticsControl->compressorDisable();
@@ -362,6 +385,7 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 		if (isRTHeld) {
 			fireState = Passing;
 		}
+
 		break;
 	case Arming: //If LTHeld 
 		if (isLowerLimit) {
@@ -378,27 +402,57 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 			controller->SetSetpoint(HOME);
 			fireState = Home;
 		}
-		break;
 
+		break;
 	case ReadyToFire:
 		//ready to fire. Lift up until a value is reached
 		if (!isRBHeld) {
 			controller->SetSetpoint(shooterEncoder->Get());
 			fireState = Retracting;
-		} else if ((count > READYTOFIRE - 3) && (count < READYTOFIRE + 3)) {
-			if (isYPressed && canIFire()) {
-				fireState = Firing;
-				pIDControlOutput->PIDOverideEnable(MANUALPIDFIRE);
-				maxEncoderValue = 0;
-			}
-			if (isXPressed && canIFire()) {
-				fireState = TrussSetup;
-				pIDControlOutput->PIDOverideEnable(TRUSSPIDSETUP);
-				maxEncoderValue = 0;
-			}
-			if (isBPressed && canIFire()) {
-				fireState = HumanShot;
-				pIDControlOutput->PIDOverideEnable(HUMANPIDSETUP);
+		} else if ((count > READYTOFIRE - 6) && (count < READYTOFIRE + 6)) {
+			if (isRTHeld) {
+				if (isXPressed && canIFire()) {
+					//fireState = TrussSetup;
+					//pIDControlOutput->PIDOverideEnable(TRUSSPIDSETUP);
+					//maxEncoderValue = 0;
+					twoStageSetupPosition = 5;
+					twoStagePidSetup = -0.08;
+					twoStageEndPosition = 250;
+					twoStagePidFire = 1.00;
+					fireState = StageTwoFire;
+					pIDControlOutput->PIDOverideEnable(twoStagePidFire);
+					maxEncoderValue = 0;
+				} else if (isYPressed && canIFire()) {
+					twoStagePidFire = 1.00;
+					twoStageEndPosition = 225;
+					fireState = StageTwoFire;
+					pIDControlOutput->PIDOverideEnable(twoStagePidFire);
+					maxEncoderValue = 0;
+				}
+			} else {
+				if (isYPressed && canIFire()) {
+					fireState = Firing;
+					pIDControlOutput->PIDOverideEnable(MANUALPIDFIRE);
+					maxEncoderValue = 0;
+				}
+
+				if (isXPressed && canIFire()) {
+					//fireState = TrussSetup;
+					//pIDControlOutput->PIDOverideEnable(TRUSSPIDSETUP);
+					//maxEncoderValue = 0;
+					twoStageSetupPosition = 15;
+					twoStagePidSetup = -0.3;
+					twoStageEndPosition = 110;
+					twoStagePidFire = 1.00;
+					fireState = StageOneFire;
+					pIDControlOutput->PIDOverideEnable(twoStagePidSetup);
+					maxEncoderValue = 0;
+				}
+
+				if (isBPressed && canIFire()) {
+					fireState = HumanShot;
+					pIDControlOutput->PIDOverideEnable(HUMANPIDSETUP);
+				}
 			}
 		} else {
 			if (pneumaticsControl->ballGrabberIsExtended()) {
@@ -409,6 +463,34 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 				}
 				controller->SetSetpoint(newSetpoint);
 			}
+		}
+		break;
+	case StageOneFire:
+		if (shooterEncoder->Get() <= twoStageSetupPosition) {
+			fireState = StageTwoFire;
+			pIDControlOutput->PIDOverideEnable(twoStagePidFire);
+			maxEncoderValue = 0;
+		} else {
+			double countChange = shootRampProfile(timeChange);
+			double newSetpoint = controller->GetSetpoint() + countChange;
+			if (newSetpoint >= twoStageSetupPosition) {
+				newSetpoint = twoStageSetupPosition;
+			}
+			controller->SetSetpoint(newSetpoint);
+		}
+		break;
+	case StageTwoFire:
+		if (isUpperLimit || shooterEncoder->Get() >= twoStageEndPosition) {
+			controller->SetSetpoint(twoStageEndPosition);
+			pIDControlOutput->PIDOverideDisable();
+			fireState = Retracting;
+		} else {
+			double countChange = shootRampProfile(timeChange);
+			double newSetpoint = controller->GetSetpoint() + countChange;
+			if (newSetpoint >= twoStageEndPosition) {
+				newSetpoint = twoStageEndPosition;
+			}
+			controller->SetSetpoint(newSetpoint);
 		}
 		break;
 	case TrussSetup:
@@ -555,6 +637,10 @@ char*ShooterControl::GetStateString() {//Returns a String Value of the Different
 		return "HumanShot";
 	case HumanSetup:
 		return "HumanSetup";
+	case StageTwoFire:
+		return "StageTwoFire";
+	case StageOneFire:
+		return "StageOneFire";
 	default:
 		return "";
 	}
