@@ -59,7 +59,7 @@ private:
 	int limitCount;
 	int maxEncoderValue;
 	enum fireStates {
-		Arming, ReadyToFire, Firing, Init, Fired, Retracting, Home, Passing, TrussShot ,TrussSetup , HumanShot, HumanSetup, StageOneFire, StageTwoFire
+		Arming, ReadyToFire, Firing, Init, Fired, Retracting, Home, Passing, TrussShot ,TrussSetup , StageOneFire, StageTwoFire
 	};
 	enum autoFireStates {
 		AutoInit, GoHome, AutoWait, AutoFire , AutoRetract

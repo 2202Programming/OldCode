@@ -23,7 +23,6 @@
 #define SHOOTINGSPEED 0.5
 #define MANUALPIDFIRE 1.00
 #define AUTOPIDFIRE 1.00
-#define HUMANPIDFIRE 1.00
 #define RIGHT 5000
 #define HOME 5
 #define ARMING 0
@@ -33,11 +32,8 @@
 #define TRUSSPIDFIRE  1.00
 #define TRUSS 110 
 
-#define HUMANSHOOTSETUP 45
-#define HUMANPIDSETUP 0.3
 #define READYTOFIRE  30 // 40 also Used at Terra Hote // 90 //at Terra Hote it was 30
 #define FIRE  225 // 200 //260 Used at Terra Hote 
-#define HUMANSHOT 250
 #define PIDTOLERANCE 5.0
 #define RETRACTCPS 250 // 75 //175.0 //for down ramp profile
 #define SHOOTCPS 900 //750.0  //  900.0 //750.0 rate for Regionals in indiana//for the shoot ramp
@@ -147,7 +143,7 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 				controller->SetSetpoint(HOME);
 				//pIDControlOutput->PIDWrite(0.3);
 				autoFireState = GoHome;
-//				shooterTimer.Start();
+				//				shooterTimer.Start();
 			} else {
 				if (canIFire()) {// Drop Down the Arm If Loader is extended
 					pIDControlOutput->PIDWrite(ARMINGSPEED);
@@ -410,11 +406,13 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 			controller->SetSetpoint(shooterEncoder->Get());
 			fireState = Retracting;
 		} else if ((count > READYTOFIRE - 6) && (count < READYTOFIRE + 6)) {
-			if (isRTHeld) {
-				if (isXPressed && canIFire()) {
-					//fireState = TrussSetup;
-					//pIDControlOutput->PIDOverideEnable(TRUSSPIDSETUP);
-					//maxEncoderValue = 0;
+				if (isYPressed && canIFire()) {//Regular Shoot
+					fireState = Firing;
+					pIDControlOutput->PIDOverideEnable(MANUALPIDFIRE);
+					maxEncoderValue = 0;
+				}
+
+				if (isXPressed && canIFire()) {//twoStageFire Shoot. Originally used to be RT Held and X 
 					twoStageSetupPosition = 5;
 					twoStagePidSetup = -0.08;
 					twoStageEndPosition = 250;
@@ -422,38 +420,16 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 					fireState = StageTwoFire;
 					pIDControlOutput->PIDOverideEnable(twoStagePidFire);
 					maxEncoderValue = 0;
-				} else if (isYPressed && canIFire()) {
+				}
+
+				if (isBPressed && canIFire()) {//twoStageFire Shoot. Originally used to be RT Held and Y
 					twoStagePidFire = 1.00;
 					twoStageEndPosition = 225;
 					fireState = StageTwoFire;
 					pIDControlOutput->PIDOverideEnable(twoStagePidFire);
 					maxEncoderValue = 0;
 				}
-			} else {
-				if (isYPressed && canIFire()) {
-					fireState = Firing;
-					pIDControlOutput->PIDOverideEnable(MANUALPIDFIRE);
-					maxEncoderValue = 0;
-				}
 
-				if (isXPressed && canIFire()) {
-					//fireState = TrussSetup;
-					//pIDControlOutput->PIDOverideEnable(TRUSSPIDSETUP);
-					//maxEncoderValue = 0;
-					twoStageSetupPosition = 15;
-					twoStagePidSetup = -0.3;
-					twoStageEndPosition = 110;
-					twoStagePidFire = 1.00;
-					fireState = StageOneFire;
-					pIDControlOutput->PIDOverideEnable(twoStagePidSetup);
-					maxEncoderValue = 0;
-				}
-
-				if (isBPressed && canIFire()) {
-					fireState = HumanShot;
-					pIDControlOutput->PIDOverideEnable(HUMANPIDSETUP);
-				}
-			}
 		} else {
 			if (pneumaticsControl->ballGrabberIsExtended()) {
 				double positionChange = loadRampProfile(timeChange);
@@ -517,34 +493,6 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 			double newSetpoint = controller->GetSetpoint() + countChange;
 			if (newSetpoint >= TRUSS) {
 				newSetpoint = TRUSS;
-			}
-			controller->SetSetpoint(newSetpoint);
-		}
-		break;
-	case HumanSetup:
-		if (shooterEncoder->Get() <= HUMANSHOOTSETUP) {
-			fireState = HumanShot;
-			pIDControlOutput->PIDOverideEnable(HUMANPIDFIRE);
-			maxEncoderValue = 0;
-		} else {
-			double countChange = shootRampProfile(timeChange);
-			double newSetpoint = controller->GetSetpoint() + countChange;
-			if (newSetpoint >= HUMANSHOOTSETUP) {
-				newSetpoint = HUMANSHOOTSETUP;
-			}
-			controller->SetSetpoint(newSetpoint);
-		}
-		break;
-	case HumanShot://Far Shoot to human player, with higher release point. B must be held.
-		if (isUpperLimit || shooterEncoder->Get() >= HUMANSHOT) {
-			controller->SetSetpoint(HUMANSHOT);
-			pIDControlOutput->PIDOverideDisable();
-			fireState = Retracting;
-		} else {
-			double countChange = shootRampProfile(timeChange);
-			double newSetpoint = controller->GetSetpoint() + countChange;
-			if (newSetpoint >= HUMANSHOT) {
-				newSetpoint = HUMANSHOT;
 			}
 			controller->SetSetpoint(newSetpoint);
 		}
@@ -633,10 +581,6 @@ char*ShooterControl::GetStateString() {//Returns a String Value of the Different
 		return "TrussShot";
 	case TrussSetup:
 		return "TrussSetup";
-	case HumanShot:
-		return "HumanShot";
-	case HumanSetup:
-		return "HumanSetup";
 	case StageTwoFire:
 		return "StageTwoFire";
 	case StageOneFire:
