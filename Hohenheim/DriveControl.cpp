@@ -36,7 +36,7 @@
 #define	Ki 0.0000
 #define	Kd 0.0
 #define AUTODRIVECPS 800.0
-#define AUTOENDDISTANCE 2600 // less than 9000  // was 2500 originally //3000 at terra hote
+#define AUTOENDDISTANCE 2970 //2900// less than 9000  // was 2500 originally //3000 at terra hote
 #define PIDTOLERANCE 5.0
 #define BEASTMODE 0.75
 
@@ -215,7 +215,7 @@ void DriveControl::runArcadeDrive() {
 }
 
 void DriveControl::BeastMode() { //Makes the acceleration of the robot faster
-	float RightJoyStickValue = xbox->getAxisRightY();	
+	/*float RightJoyStickValue = xbox->getAxisRightY();	
 	if(RightJoyStickValue >= BEASTMODE){
 		beastMode = true;
 	}
@@ -231,7 +231,7 @@ void DriveControl::BeastMode() { //Makes the acceleration of the robot faster
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "NORMAL MODE");
 	}
 	dsLCD->UpdateLCD();
-
+*/
 }
 
 void DriveControl::manualShift() {
@@ -248,7 +248,7 @@ void DriveControl::manualShift() {
 void DriveControl::run() {
 	runArcadeDrive();
 	manualShift();
-	BeastMode();
+	//BeastMode();
 }
 
 /*

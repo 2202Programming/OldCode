@@ -125,8 +125,7 @@ public:
 		while (IsAutonomous() && IsEnabled()) {
 			GetWatchdog().Feed();
 			//drives forward to shooting point
-			bool atDestination = destinationPrevious
-					|| driveControl.autoPIDDrive2(); //autoDrive returns true when robot reached it's goal
+			bool atDestination = destinationPrevious || driveControl.autoPIDDrive2(); //autoDrive returns true when robot reached it's goal
 			if (atDestination) {
 				// The robot has reached the destination on the floor and is now ready to open and shoot
 				if (!started) {
@@ -138,9 +137,9 @@ public:
 
 				pneumaticsControl->ballGrabberExtend();
 				//waits for feeding to be done
-				if (feeding.Get() < 3.0) {
+				if (feeding.Get() < 2.0) {//3.0 was 
 					shooterControl->feed(true);
-				} else if (feeding.Get() >= 3.0) {
+				} else if (feeding.Get() >= 2.0) { // 3.0 was 
 					shooterControl->feed(false);
 					feeding.Stop();
 				}
