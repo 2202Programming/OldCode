@@ -56,6 +56,7 @@ private:
 	float MinPower;
 	float maxValue;
 	float counter;
+	float maxAutoShootTime;
 	int limitCount;
 	int maxEncoderValue;
 	enum fireStates {
@@ -70,7 +71,7 @@ private:
 	DigitalInput *lowerLimit;
 	DigitalInput *upperLimit;
 	DigitalInput *five;
-	Timer accelTimer;
+	Timer autoShootTimer;
 	Timer shooterTimer;
 	double previousTime;
 	bool autoShot;
