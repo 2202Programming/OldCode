@@ -23,6 +23,8 @@
 #define SHOOTINGSPEED 0.5
 #define MANUALPIDFIRE 1.00
 #define AUTOPIDFIRE 1.00
+
+#define VARRIABLEAUTOPIDFIRE 0.95 //Change this varriable to test lower and lower shooter speed in autonomous mode. Normal is 1.00
 #define RIGHT 5000
 #define HOME 5
 #define ARMING 0
@@ -81,6 +83,7 @@ ShooterControl::ShooterControl() {
 	twoStagePidSetup = 0.0;
 	twoStageEndPosition = 0;
 	twoStagePidFire = 0.0;
+	maxAutoShootTime = 0.0;
 
 }
 
@@ -106,6 +109,8 @@ void ShooterControl::initializeAuto() {
 	shooterTimer.Stop();
 	shooterTimer.Reset();
 	shooterTimer.Start();
+	autoShootTimer.Stop();
+	autoShootTimer.Reset();
 	previousTime = shooterTimer.Get();
 	shooterEncoder->Reset();
 	shooterEncoder->Start();
@@ -133,6 +138,10 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 	bool isLowerLimit = lowerLimit->Get() == 0;
 	double timeChange = (shooterTimer.Get() - previousTime);
 	previousTime = shooterTimer.Get();
+	float autoShooterTimer = autoShootTimer.Get();
+	if (maxAutoShootTime < autoShooterTimer) {
+		maxAutoShootTime = autoShooterTimer;
+	}
 
 	if (!doneAutoFired) {//A check to only shoot once
 		switch (autoFireState) {
@@ -177,8 +186,9 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 			if (cummulativeTime >= 1.5) { //waits 2.5 seconds once arm is at readyToFire
 				if (canIFire()) {
 					autoFireState = AutoFire;
-//					pIDControlOutput->PIDOverideEnable(AUTOPIDFIRE);
-					pIDControlOutput->PIDOverideEnable(0.95);
+					autoShootTimer.Start();
+					//pIDControlOutput->PIDOverideEnable(AUTOPIDFIRE);
+					pIDControlOutput->PIDOverideEnable(VARRIABLEAUTOPIDFIRE); //0.95 
 				}
 			}
 			break;
@@ -188,6 +198,7 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 				controller->SetSetpoint(FIRE);
 				pneumaticsControl->compressorEnable();
 				pIDControlOutput->PIDOverideDisable();
+				autoShootTimer.Stop();
 				autoFireState = AutoRetract;
 			} else {
 				double countChange = shootRampProfile(timeChange);
@@ -214,6 +225,8 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 	}
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "AS: %s",
 			GetAutoStateString());
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "T: %f, MT: %f ",
+				autoShootTimer.Get(), maxAutoShootTime);
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "EncoderC: %i",
 			shooterEncoder->Get());
 	dsLCD->UpdateLCD();
@@ -427,6 +440,16 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 					maxEncoderValue = 0;
 				}
 
+				if (isBPressed && canIFire()) {//twoStageFire Shoot. Jim's Favorite shoot. Shoots the ball insanely high
+					twoStageSetupPosition = 15;
+					twoStagePidSetup = -0.3;
+					twoStageEndPosition = 110;
+					twoStagePidFire = 1.00;
+					fireState = StageOneFire;
+					pIDControlOutput->PIDOverideEnable(twoStagePidSetup);
+					maxEncoderValue = 0;
+				}
+
 			} else {
 				if (isYPressed && canIFire()) {//Regular Shoot
 					fireState = Firing;
@@ -588,8 +611,8 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "S: %s C: %i E: %i",
 			GetStateString(), count, maxEncoderValue);
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "E: %i", maxEncoderValue);
-	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "Reed Val: %i",
-			pneumaticsControl->ReadSwitch());
+	//dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "Reed Val: %i", //Code to display REED value. 
+	//		pneumaticsControl->ReadSwitch());
 
 }
 
