@@ -82,6 +82,11 @@ bool PneumaticsControl::isHighGear() {
 	return highGear;
 }
 
+int PneumaticsControl::ReadSwitch(){
+return ballGrabberExtendLimit->Get();
+	
+}
+
 void PneumaticsControl::shiftUp() {
 	highGear = true;
 	shiftControlL->Set(DoubleSolenoid::kForward);

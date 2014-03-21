@@ -174,10 +174,11 @@ void ShooterControl::autoShoot() {//Autonomous Shooting Code using Encodere Coun
 			break;
 		case AutoWait://A waiting period of 2.5 Seconds. transitions to AutoFire
 			cummulativeTime += timeChange;
-			if (cummulativeTime >= 2.5) { //waits 2.5 seconds once arm is at readyToFire
+			if (cummulativeTime >= 1.5) { //waits 2.5 seconds once arm is at readyToFire
 				if (canIFire()) {
 					autoFireState = AutoFire;
-					pIDControlOutput->PIDOverideEnable(AUTOPIDFIRE);
+//					pIDControlOutput->PIDOverideEnable(AUTOPIDFIRE);
+					pIDControlOutput->PIDOverideEnable(0.95);
 				}
 			}
 			break;
@@ -406,6 +407,27 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 			controller->SetSetpoint(shooterEncoder->Get());
 			fireState = Retracting;
 		} else if ((count > READYTOFIRE - 6) && (count < READYTOFIRE + 6)) {
+			if (isRTHeld) {
+				if (isXPressed && canIFire()) {//twoStageFire Shoot. Originally used to be RT Held and X 
+					twoStageSetupPosition = 5;
+					twoStagePidSetup = -0.08;
+					twoStageEndPosition = 250;
+					twoStagePidFire = 0.95;
+					fireState = StageTwoFire;
+					pIDControlOutput->PIDOverideEnable(twoStagePidFire);
+					maxEncoderValue = 0;
+				}
+				if (isYPressed && canIFire()) {//twoStageFire Shoot. Originally used to be RT Held and X 
+					twoStageSetupPosition = 5;
+					twoStagePidSetup = -0.08;
+					twoStageEndPosition = 250;
+					twoStagePidFire = 0.90;
+					fireState = StageTwoFire;
+					pIDControlOutput->PIDOverideEnable(twoStagePidFire);
+					maxEncoderValue = 0;
+				}
+
+			} else {
 				if (isYPressed && canIFire()) {//Regular Shoot
 					fireState = Firing;
 					pIDControlOutput->PIDOverideEnable(MANUALPIDFIRE);
@@ -421,14 +443,24 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 					pIDControlOutput->PIDOverideEnable(twoStagePidFire);
 					maxEncoderValue = 0;
 				}
-
-				if (isBPressed && canIFire()) {//twoStageFire Shoot. Originally used to be RT Held and Y
+				/*
+				 if (isBPressed && canIFire()) {//twoStageFire Shoot. Originally used to be RT Held and Y
+				 twoStagePidFire = 1.00;
+				 twoStageEndPosition = 225;
+				 fireState = StageTwoFire;
+				 pIDControlOutput->PIDOverideEnable(twoStagePidFire);
+				 maxEncoderValue = 0;
+				 }
+				 */
+				if (isBPressed && canIFire()) {
 					twoStagePidFire = 1.00;
-					twoStageEndPosition = 225;
-					fireState = StageTwoFire;
-					pIDControlOutput->PIDOverideEnable(twoStagePidFire);
+					twoStageEndPosition = 95;
+					twoStageSetupPosition = 20;
+					fireState = StageOneFire;
+					pIDControlOutput->PIDOverideEnable(-0.1);
 					maxEncoderValue = 0;
 				}
+			}
 
 		} else {
 			if (pneumaticsControl->ballGrabberIsExtended()) {
@@ -556,6 +588,8 @@ void ShooterControl::PIDShooter() {//Shooting Using Encoder Count and PIDControl
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line1, "S: %s C: %i E: %i",
 			GetStateString(), count, maxEncoderValue);
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line3, "E: %i", maxEncoderValue);
+	dsLCD->PrintfLine(DriverStationLCD::kUser_Line5, "Reed Val: %i",
+			pneumaticsControl->ReadSwitch());
 
 }
 
