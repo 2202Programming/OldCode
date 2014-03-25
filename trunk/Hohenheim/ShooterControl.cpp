@@ -24,7 +24,7 @@
 #define MANUALPIDFIRE 1.00
 #define AUTOPIDFIRE 1.00
 
-#define VARRIABLEAUTOPIDFIRE 0.95 //Change this varriable to test lower and lower shooter speed in autonomous mode. Normal is 1.00
+#define VARRIABLEAUTOPIDFIRE 0.85//0.95 //Change this varriable to test lower and lower shooter speed in autonomous mode. Normal is 1.00
 #define RIGHT 5000
 #define HOME 5
 #define ARMING 0
