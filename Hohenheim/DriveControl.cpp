@@ -76,7 +76,9 @@ void DriveControl::initialize() {
 	leftEncoder->SetDistancePerPulse(REVOLUTIONS);
 	rightEncoder->SetDistancePerPulse(REVOLUTIONS);
 	pneumaticsControl->shiftUp();
-	autoTimer.Stop();	
+	autoTimer.Stop();
+	stick_Prev_X = 0.0; 
+	stick_Prev_Y = 0.0;	
 }
 
 void DriveControl::initializeAuto() {
@@ -179,6 +181,27 @@ float DriveControl::autoDriveRampProfile(float timeChange) {
 	return (timeChange * AUTODRIVECPS);
 }
 
+void DriveControl::stickLimiter(float stick_X, float stick_Y){
+	float stick_Delta_Max = 0.02;
+	float delta_X = stick_X - stick_Prev_X;
+	float delta_Y = stick_Y - stick_Prev_Y;
+	float stick_Delta = sqrtf(powf(delta_X,2) + powf(delta_Y,2));
+	if (stick_Delta > stick_Delta_Max){	//Limiter
+		float delta_X_Limited = stick_Delta_Max * (delta_X / stick_Delta);
+		float delta_Y_Limited = stick_Delta_Max * (delta_Y / stick_Delta);
+		stick_X_Cmd = stick_Prev_X + delta_X_Limited;
+		stick_Y_Cmd = stick_Prev_Y + delta_Y_Limited;
+	}
+	else {                      //No limiter on
+		stick_X_Cmd = stick_X;
+		stick_Y_Cmd = stick_Y;
+	} 
+	//assign current to previous
+	stick_Prev_X = stick_X_Cmd; 
+	stick_Prev_Y = stick_Y_Cmd;		
+	
+	
+}
 /*
  * Runs Arcade Drive
  */
@@ -188,6 +211,8 @@ void DriveControl::runArcadeDrive() {
 	float rotateValue = INITIAL;
 	float frictionValue = INITIAL;
 	float rotateFriction = INITIAL;
+	float stick_X;
+	float stick_Y;
 	//SpeedControl = SPEEDCONTROL;
 	moveValue = xbox->getAxisLeftY();
 	rotateValue = xbox->getAxisLeftX();
@@ -203,10 +228,17 @@ void DriveControl::runArcadeDrive() {
 	} else if (rotateValue < -DEADZONE) {
 		rotateFriction = -FRICTION;
 	}
-
-	myRobot->ArcadeDrive(
-			((-1.0) * ((moveValue + frictionValue) / SpeedControl)),
-			((-1.0) * ((rotateValue + rotateFriction) / SpeedControl)));
+	stick_X = ((-1.0) * ((moveValue + frictionValue) / SpeedControl));
+	stick_Y = ((-1.0) * ((rotateValue + rotateFriction) / SpeedControl));
+	stickLimiter (stick_X, stick_Y);
+	
+	
+	
+	
+	
+	myRobot->ArcadeDrive( stick_X_Cmd, stick_Y_Cmd);
+			//((-1.0) * ((moveValue + frictionValue) / SpeedControl)),
+			//((-1.0) * ((rotateValue + rotateFriction) / SpeedControl)));
 	//"Backwards" turning //myRobot.ArcadeDrive(((moveValue + frictionValue) / SpeedControl), ((rotateValue + rotateFriction) / SpeedControl));
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "ELC: %i, ERC: %i",
 			leftEncoder->Get(), rightEncoder->Get());
@@ -215,7 +247,7 @@ void DriveControl::runArcadeDrive() {
 }
 
 void DriveControl::BeastMode() { //Makes the acceleration of the robot faster
-	/*float RightJoyStickValue = xbox->getAxisRightY();	
+	float RightJoyStickValue = xbox->getAxisRightY();	
 	if(RightJoyStickValue >= BEASTMODE){
 		beastMode = true;
 	}
@@ -231,7 +263,7 @@ void DriveControl::BeastMode() { //Makes the acceleration of the robot faster
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "NORMAL MODE");
 	}
 	dsLCD->UpdateLCD();
-*/
+
 }
 
 void DriveControl::manualShift() {

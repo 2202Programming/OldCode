@@ -44,6 +44,11 @@
 #define	Ki 0.0003 // 0.00075
 #define	Kd 0.006
 
+#define VELOCITY_MAX 0.0
+#define VELOCITY_MIN 0.0
+
+
+
 static ShooterControl *shootercontrol = NULL;
 ShooterControl *ShooterControl::getInstance() {
 	if (shootercontrol == NULL) {
