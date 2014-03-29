@@ -48,8 +48,13 @@ public:
 	void Autonomous(void) {
 		DriveThenShootAuto();
 		//AutonomousStateMachine();
+		VisionAutonomous();
 	}
 
+	void VisionAutonomous(){
+		
+	}
+	
 	void AutonomousStateMachine() {
 		pneumaticsControl->initialize();
 		shooterControl->initializeAuto();
