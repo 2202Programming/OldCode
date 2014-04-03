@@ -19,7 +19,7 @@ public:
 	char*DriveControl::GetAutoStateString();
 	bool autoPIDDrive2();
 	void stickLimiter(float stick_X, float stick_Y);
-	
+
 private:
 	float totalPositionChange;
 	PneumaticsControl *pneumaticsControl;
@@ -39,14 +39,20 @@ private:
 	PIDControlSubClass* pIDControlOutputRight;
 	PIDController* controllerRight;
 	Timer autoTimer;
+	Timer shiftTimer;
 	double previousAutoTime;
 	enum AutoState {
-			AutoDrive, AutoStopped
+		AutoDrive, AutoStopped
 	};
+	enum ShiftStates {
+		Idle, ShiftWait, ShiftComplete
+	};
+	ShiftStates currentShiftState;
 	AutoState currentAutoState;
 	float autoDriveRampProfile(float timeChange);
-	float SpeedControl; 
+	float SpeedControl;
 	bool beastMode;
+	bool ShiftingUp;
 	float stick_Prev_X;
 	float stick_Prev_Y;
 	float stick_X_Cmd;

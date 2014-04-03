@@ -15,7 +15,6 @@
  #define SHIFTDELAYINSECONDS 1.0
  */
 
-
 #define FRONTRIGHTMOTOR 4
 #define BACKRIGHTMOTOR 3
 #define FRONTLEFTMOTOR 2
@@ -65,7 +64,7 @@ DriveControl::DriveControl() {
 	pneumaticsControl = PneumaticsControl::getInstance();
 	SpeedControl = SPEEDCONTROL;
 	beastMode = false;
-	
+
 }
 
 void DriveControl::initialize() {
@@ -77,8 +76,11 @@ void DriveControl::initialize() {
 	rightEncoder->SetDistancePerPulse(REVOLUTIONS);
 	pneumaticsControl->shiftUp();
 	autoTimer.Stop();
-	stick_Prev_X = 0.0; 
-	stick_Prev_Y = 0.0;	
+	shiftTimer.Stop();
+	shiftTimer.Reset();
+	stick_Prev_X = 0.0;
+	stick_Prev_Y = 0.0;
+	currentShiftState = Idle;
 }
 
 void DriveControl::initializeAuto() {
@@ -94,7 +96,7 @@ void DriveControl::initializeAuto() {
 	autoTimer.Reset();
 	autoTimer.Start();
 	previousAutoTime = autoTimer.Get();
-	totalPositionChange = 0.0;	
+	totalPositionChange = 0.0;
 }
 
 /*
@@ -181,31 +183,31 @@ float DriveControl::autoDriveRampProfile(float timeChange) {
 	return (timeChange * AUTODRIVECPS);
 }
 
-void DriveControl::stickLimiter(float stick_X, float stick_Y){
-	float stick_Delta_Max = 0.02;
+void DriveControl::stickLimiter(float stick_X, float stick_Y) {
+	float stick_Delta_Max = 0.025;
 	float delta_X = stick_X - stick_Prev_X;
 	float delta_Y = stick_Y - stick_Prev_Y;
-	float stick_Delta = sqrtf(powf(delta_X,2) + powf(delta_Y,2));
-	if (stick_Delta > stick_Delta_Max){	//Limiter
+	float stick_Delta = sqrtf(powf(delta_X, 2) + powf(delta_Y, 2));
+	if (stick_Delta > stick_Delta_Max) { //Limiter
 		float delta_X_Limited = stick_Delta_Max * (delta_X / stick_Delta);
 		float delta_Y_Limited = stick_Delta_Max * (delta_Y / stick_Delta);
 		stick_X_Cmd = stick_Prev_X + delta_X_Limited;
 		stick_Y_Cmd = stick_Prev_Y + delta_Y_Limited;
-	}
-	else {                      //No limiter on
+	} else { //No limiter on
 		stick_X_Cmd = stick_X;
 		stick_Y_Cmd = stick_Y;
-	} 
+	}
 	//assign current to previous
-	stick_Prev_X = stick_X_Cmd; 
-	stick_Prev_Y = stick_Y_Cmd;		
-	
-	
+	stick_Prev_X = stick_X_Cmd;
+	stick_Prev_Y = stick_Y_Cmd;
+
 }
 /*
  * Runs Arcade Drive
  */
 void DriveControl::runArcadeDrive() {
+	//bottom press is used to shift the robot
+	bool LeftBumperHeld = xbox->isLBumperHeld();
 	// friction value is added as a constant to motor to make it more responsive to joystick at lower value
 	float moveValue = INITIAL;
 	float rotateValue = INITIAL;
@@ -230,31 +232,67 @@ void DriveControl::runArcadeDrive() {
 	}
 	stick_X = ((-1.0) * ((moveValue + frictionValue) / SpeedControl));
 	stick_Y = ((-1.0) * ((rotateValue + rotateFriction) / SpeedControl));
-	stickLimiter (stick_X, stick_Y);
-	
-	
-	
-	
-	
-	myRobot->ArcadeDrive( stick_X_Cmd, stick_Y_Cmd);
-			//((-1.0) * ((moveValue + frictionValue) / SpeedControl)),
-			//((-1.0) * ((rotateValue + rotateFriction) / SpeedControl)));
+	stickLimiter(stick_X, stick_Y);
+
+	//Idle, ShiftStart, ShiftWait, ShiftComplete
+	//Shifting Code with a "stall"
+	switch (currentShiftState) {
+	case Idle:
+		myRobot->SetMaxOutput(1.00);
+		if (LeftBumperHeld && !pneumaticsControl->isHighGear()) {
+			currentShiftState = ShiftWait;
+			shiftTimer.Reset();
+			shiftTimer.Start();
+			myRobot->SetMaxOutput(0.50);
+		} else if (!LeftBumperHeld && pneumaticsControl->isHighGear()) {
+			currentShiftState = ShiftWait;
+			shiftTimer.Reset();
+			shiftTimer.Start();
+			myRobot->SetMaxOutput(0.50);
+		}
+		break;
+	case ShiftWait:
+		if (shiftTimer.Get() > 0.20) {
+			if (pneumaticsControl->isHighGear()) {
+				pneumaticsControl->shiftDown();
+			} else {
+				pneumaticsControl->shiftUp();
+			}
+			shiftTimer.Stop();
+			shiftTimer.Reset();
+			shiftTimer.Start();
+			currentShiftState = ShiftComplete;
+		}
+		break;
+	case ShiftComplete:
+		if (shiftTimer.Get() > .20) {
+			myRobot->SetMaxOutput(1.00);
+			currentShiftState = Idle;
+			shiftTimer.Stop();
+			shiftTimer.Reset();
+		}
+		break;
+	}
+
+	myRobot->ArcadeDrive(stick_X_Cmd, stick_Y_Cmd);
+	//((-1.0) * ((moveValue + frictionValue) / SpeedControl)),
+	//((-1.0) * ((rotateValue + rotateFriction) / SpeedControl)));
 	//"Backwards" turning //myRobot.ArcadeDrive(((moveValue + frictionValue) / SpeedControl), ((rotateValue + rotateFriction) / SpeedControl));
 	dsLCD->PrintfLine(DriverStationLCD::kUser_Line4, "ELC: %i, ERC: %i",
 			leftEncoder->Get(), rightEncoder->Get());
 	dsLCD->UpdateLCD();
 
-}
+} 
 
 void DriveControl::BeastMode() { //Makes the acceleration of the robot faster
-	float RightJoyStickValue = xbox->getAxisRightY();	
-	if(RightJoyStickValue >= BEASTMODE){
+	float RightJoyStickValue = xbox->getAxisRightY();
+	if (RightJoyStickValue >= BEASTMODE) {
 		beastMode = true;
 	}
-	if(RightJoyStickValue <= -BEASTMODE){
+	if (RightJoyStickValue <= -BEASTMODE) {
 		beastMode = false;
 	}
-	
+
 	if (beastMode) {
 		SpeedControl = BEASTMODE;
 		dsLCD->PrintfLine(DriverStationLCD::kUser_Line6, "BEAST MODE");
