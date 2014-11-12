@@ -166,17 +166,12 @@ DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/Drive
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
-DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/PIDControlSubClass.o : $(PRJ_ROOT_DIR)/PIDControlSubClass.cpp $(FORCE_FILE_BUILD)
-	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
-
-
-DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/XboxController.o : $(PRJ_ROOT_DIR)/XboxController.cpp $(FORCE_FILE_BUILD)
+DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/LCDControl.o : $(PRJ_ROOT_DIR)/LCDControl.cpp $(FORCE_FILE_BUILD)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc $(DEBUGFLAGS_C++-Compiler) $(CC_ARCH_SPEC) -ansi -Wall  -MD -MP -mlongcall $(ADDED_C++FLAGS) $(IDE_INCLUDES) $(ADDED_INCLUDES) -DCPU=$(CPU) -DTOOL_FAMILY=$(TOOL_FAMILY) -DTOOL=$(TOOL) -D_WRS_KERNEL   $(DEFINES) -o "$@" -c "$<"
 
 
 OBJECTS_DriverStationLCDText_partialImage = DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/DriverStationLCDTextExample.o \
-	 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/PIDControlSubClass.o \
-	 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/XboxController.o
+	 DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/LCDControl.o
 
 DriverStationLCDText_partialImage/$(MODE_DIR)/DriverStationLCDText_partialImage.o : $(OBJECTS_DriverStationLCDText_partialImage)
 	$(TRACE_FLAG)if [ ! -d "`dirname "$@"`" ]; then mkdir -p "`dirname "$@"`"; fi;echo "building $@"; $(TOOL_PATH)ccppc -r -nostdlib -Wl,-X  -o "$@" $(OBJECTS_DriverStationLCDText_partialImage) $(LIBPATH) $(LIBS) $(ADDED_LIBPATH) $(ADDED_LIBS)  && if [ "$(EXPAND_DBG)" = "1" ]; then plink "$@";fi
@@ -190,7 +185,7 @@ DriverStationLCDText_partialImage/$(MODE_DIR)/DriverStationLCDText_partialImage_
 
 force : 
 
-DEP_FILES := DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/DriverStationLCDTextExample.d DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/PIDControlSubClass.d DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/XboxController.d
+DEP_FILES := DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/DriverStationLCDTextExample.d DriverStationLCDText_partialImage/$(MODE_DIR)/Objects/DriverStationLCDText/LCDControl.d
 -include $(DEP_FILES)
 
 
